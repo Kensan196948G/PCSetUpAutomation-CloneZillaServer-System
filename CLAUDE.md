@@ -121,15 +121,40 @@ Body: {"serial": "ABC123456", "pcname": "20251116M", "status": "completed", "tim
 
 ## 開発時の注意事項
 
+### DRBL/Clonezillaサーバ構築時（最重要）
+
+#### Docker干渉問題
+**症状**:
+- `drblpush -i` 実行時に `docker0` インターフェース（172.17.0.1）が検出される
+- `/tftpboot/nbi_img/` ディレクトリが作成されない
+- カーネル検出エラーが発生
+
+**原因**:
+- Dockerサービスが作成する `docker0` 仮想ネットワークインターフェースとDRBLが競合
+- atftpdとtftpd-hpaが競合
+
+**解決策**:
+```bash
+# 自動修正スクリプトを実行
+sudo ./scripts/fix_drbl_docker_issue.sh
+```
+
+**重要**: DRBL環境ではDockerサービスを停止・無効化する必要があります。
+
+**詳細**: [DRBL_FIX_DOCKER_GUIDE.md](./docs/04_インフラ/DRBL_FIX_DOCKER_GUIDE.md)
+
+---
+
 ### マスターPC構築時
 - AppX除外処理を含むSysprep前処理を確実に実施
 - unattend.xmlは自動ログオン設定を含める
 - マスターイメージ更新は年数回を想定
 
-### DRBL/Clonezillaサーバ
+### DRBL/Clonezillaサーバ運用時
 - マスターイメージ格納先: `/home/partimag/`
 - ODJファイル格納先: `/srv/odj/` 推奨
 - 圧縮形式: zstd or gzip
+- Dockerサービスは無効化を維持
 
 ### PowerShellスクリプト
 - エラーハンドリング: DRBL API不応答時3回リトライ

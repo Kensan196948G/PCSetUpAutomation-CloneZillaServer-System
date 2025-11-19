@@ -641,6 +641,52 @@ sudo cat /var/lib/dhcp/dhcpd.leases
 
 ## トラブルシューティング
 
+### 問題0: Docker干渉によるDRBL設定エラー（重要）
+
+**症状**:
+- `drblpush -i` 実行時に `docker0` インターフェース（172.17.0.1）が検出される
+- `/tftpboot/nbi_img/` ディレクトリが存在せず、PXELinux設定に失敗
+- カーネル検出エラー: `Unable to find kernel for client!!!`
+- atftpdとtftpd-hpaの競合
+
+**原因**:
+- Dockerサービスが `docker0` 仮想ネットワークインターフェースを作成
+- DRBLがこれをDRBL環境用NICとして誤認識
+- atftpdがインストールされている場合、tftpd-hpaと競合
+
+**解決策**:
+
+```bash
+# 自動修正スクリプトを実行
+cd /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project
+sudo ./scripts/fix_drbl_docker_issue.sh
+
+# または手動で修正:
+# 1. Dockerサービスを停止・無効化
+sudo systemctl stop docker.socket docker containerd
+sudo systemctl disable docker.socket docker containerd
+
+# 2. docker0インターフェースを無効化
+sudo ip link set docker0 down
+
+# 3. atftpdを削除、tftpd-hpaを使用
+sudo apt remove atftpd
+sudo apt install tftpd-hpa
+sudo systemctl start tftpd-hpa
+sudo systemctl enable tftpd-hpa
+
+# 4. DRBL設定をクリーンアップして再実行
+sudo /usr/sbin/drblsrv -i
+sudo /usr/sbin/drblpush -i
+```
+
+**詳細ガイド**: [DRBL_FIX_DOCKER_GUIDE.md](./DRBL_FIX_DOCKER_GUIDE.md)
+
+**緊急度**: 最高
+**対応所要時間**: 15-20分
+
+---
+
 ### 問題1: クライアントがDHCPからIPを取得できない
 
 **症状**:
@@ -806,3 +852,12 @@ sudo apt update && sudo apt upgrade -y
 - [DRBL公式サイト](https://drbl.org/)
 - [Clonezilla公式サイト](https://clonezilla.org/)
 - [DRBLドキュメント](https://drbl.org/documentation/)
+
+---
+
+## 更新履歴
+
+| 日付 | バージョン | 更新内容 |
+|------|-----------|---------|
+| 2025-11-19 | 1.1 | Docker干渉問題のトラブルシューティングセクションを追加 |
+| 2025-11-17 | 1.0 | 初版作成 |

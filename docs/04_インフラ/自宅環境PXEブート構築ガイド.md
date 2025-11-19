@@ -600,6 +600,30 @@ Nov 17 13:00:06 drbl in.tftpd[5678]: RRQ from 192.168.3.139 filename pxelinux.cf
 
 ## 🔍 トラブルシューティング
 
+### 問題0: Docker干渉によるDRBL設定失敗（最重要）
+
+**症状**:
+- `drblpush -i` 実行時に `docker0` (172.17.0.1) が誤検出される
+- `/tftpboot/nbi_img/` ディレクトリが作成されない
+- PXEブート環境が正しく構築されない
+
+**原因**:
+Docker が作成する `docker0` 仮想ネットワークインターフェースとDRBLが競合
+
+**解決方法**:
+
+```bash
+# 自動修正スクリプトを実行
+cd /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project
+sudo ./scripts/fix_drbl_docker_issue.sh
+```
+
+**詳細**: [DRBL_FIX_DOCKER_GUIDE.md](./DRBL_FIX_DOCKER_GUIDE.md)
+
+**対応時間**: 15-20分
+
+---
+
 ### 問題1: ルータとDRBLのDHCPが競合する
 
 **症状**: PCがルータからIPを取得してしまい、PXEブートしない
@@ -744,4 +768,12 @@ tftp> get pxelinux.0
 
 **作成日**: 2025年11月17日
 **作成者**: システム管理チーム
-**次回更新予定**: PXEブートテスト実施後
+
+---
+
+## 更新履歴
+
+| 日付 | バージョン | 更新内容 |
+|------|-----------|---------|
+| 2025-11-19 | 1.1 | Docker干渉問題のトラブルシューティングを追加 |
+| 2025-11-17 | 1.0 | 初版作成 |

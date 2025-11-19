@@ -152,6 +152,11 @@ sudo systemctl enable nginx
 - **DRBL/Clonezilla**: 最新版
 - **Windows**: Windows 11（マスターPC）
 
+### 重要な前提条件
+- ⚠️ **Docker**: DRBL環境ではDockerサービスを無効化する必要があります
+  - Dockerの `docker0` インターフェースがDRBL設定と競合するため
+  - 詳細: [DRBL_FIX_DOCKER_GUIDE.md](./docs/04_インフラ/DRBL_FIX_DOCKER_GUIDE.md)
+
 ### Python依存パッケージ
 ```
 Flask==3.0.0
@@ -318,5 +323,20 @@ pytest --cov=flask-app --cov-report=html
 
 ---
 
-**最終更新日**: 2025-11-17
-**バージョン**: 1.0.0
+## 🔧 トラブルシューティング
+
+### Docker干渉問題
+DRBL環境構築時にDockerの `docker0` インターフェースが干渉する問題が発生します。
+
+**解決方法**:
+```bash
+# 自動修正スクリプトを実行
+sudo ./scripts/fix_drbl_docker_issue.sh
+```
+
+**詳細**: [DRBL_FIX_DOCKER_GUIDE.md](./docs/04_インフラ/DRBL_FIX_DOCKER_GUIDE.md)
+
+---
+
+**最終更新日**: 2025-11-19
+**バージョン**: 1.1.0

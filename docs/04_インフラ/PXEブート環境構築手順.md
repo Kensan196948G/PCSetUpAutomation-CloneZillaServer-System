@@ -682,6 +682,38 @@ echo "=== Check complete ==="
 
 ## トラブルシューティング
 
+### 問題0: Docker干渉によるDRBL/PXE環境構築失敗（重要）
+
+**症状**:
+- `drblpush -i` 実行時に `docker0` インターフェースが誤検出される
+- TFTPサーバ（atftpd/tftpd-hpa）の競合
+- PXEブート設定が正しく生成されない
+
+**原因**:
+- Dockerが作成する `docker0` 仮想NICとDRBLが競合
+- atftpdとtftpd-hpaの両方がインストールされている
+
+**解決策**:
+
+```bash
+# 自動修正スクリプトを実行
+sudo ./scripts/fix_drbl_docker_issue.sh
+
+# 手動修正:
+# 1. Docker停止・無効化
+sudo systemctl stop docker docker.socket
+sudo systemctl disable docker docker.socket
+
+# 2. atftpd削除、tftpd-hpa使用
+sudo apt remove atftpd
+sudo systemctl start tftpd-hpa
+sudo systemctl enable tftpd-hpa
+```
+
+**詳細**: [DRBL_FIX_DOCKER_GUIDE.md](./DRBL_FIX_DOCKER_GUIDE.md)
+
+---
+
 ### 問題1: PXE-E51 No DHCP offers
 
 **原因**:
@@ -775,3 +807,12 @@ EOF
 - [SYSLINUX Project](https://wiki.syslinux.org/)
 - [ISC DHCP Server Documentation](https://www.isc.org/dhcp/)
 - [NFS Server Configuration](https://ubuntu.com/server/docs/service-nfs)
+
+---
+
+## 更新履歴
+
+| 日付 | バージョン | 更新内容 |
+|------|-----------|---------|
+| 2025-11-19 | 1.1 | Docker干渉問題のトラブルシューティングを追加 |
+| 2025-11-17 | 1.0 | 初版作成 |

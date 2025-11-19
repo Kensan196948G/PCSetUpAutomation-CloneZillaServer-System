@@ -78,3 +78,15 @@ temp/
 Thumbs.db
 \n# Log files from background processes\nnohup.out
 \n# Ignore large media files\n*.iso
+
+# Serena MCP Cache
+.serena/cache/
+
+# Benchmark Results
+.benchmarks/
+*.benchmark
+
+# Docker Files (not used in this project)
+Dockerfile
+docker-compose.yml
+.dockerignore

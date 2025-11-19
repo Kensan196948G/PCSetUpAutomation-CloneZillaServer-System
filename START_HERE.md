@@ -13,6 +13,7 @@
 - ✅ **DRBL**: インストール済み（/usr/sbin/）
 - ✅ **TFTPサーバ**: 起動中
 - ✅ **ネットワーク**: enp2s0 (192.168.3.135)
+- ⚠️ **Docker**: 無効化済み（DRBL環境には必須）
 
 ---
 
@@ -84,7 +85,21 @@ Clonezilla Live Menu
 
 ## 📞 問題が発生した場合
 
-### コマンド
+### Docker干渉問題（最重要）
+
+**症状**: drblpush実行時に `docker0` インターフェースが検出される
+
+**解決方法**:
+```bash
+# 自動修正スクリプトを実行
+sudo ./scripts/fix_drbl_docker_issue.sh
+```
+
+**詳細**: [DRBL_FIX_DOCKER_GUIDE.md](./docs/04_インフラ/DRBL_FIX_DOCKER_GUIDE.md)
+
+---
+
+### 一般的なコマンド
 
 ```bash
 # 診断スクリプト実行
@@ -103,6 +118,7 @@ sudo netstat -ulnp | grep :69
 ### トラブルシューティングガイド
 
 → `docs/04_インフラ/自宅環境PXEブート構築ガイド.md`
+→ `docs/08_トラブルシューティング/トラブルシューティング集.md`
 
 ---
 
@@ -118,4 +134,23 @@ sudo netstat -ulnp | grep :69
 
 ---
 
+## 📋 前提条件チェックリスト
+
+PXEブート環境構築前に、以下を確認してください：
+
+- [ ] Dockerサービスが停止・無効化されている（`systemctl status docker`）
+- [ ] `docker0` インターフェースが存在しない（`ip addr show docker0` でエラー）
+- [ ] atftpdが削除されている（`dpkg -l | grep atftpd` で何も表示されない）
+- [ ] tftpd-hpaがインストール済み（`systemctl status tftpd-hpa`）
+- [ ] 物理NIC（enp2s0等）が正常に動作している
+
+**前提条件を満たしていない場合**:
+```bash
+sudo ./scripts/fix_drbl_docker_issue.sh
+```
+
+---
+
 **今すぐ実行できます！上記2つのコマンドを順番に実行してください。**
+
+**最終更新日**: 2025-11-19
