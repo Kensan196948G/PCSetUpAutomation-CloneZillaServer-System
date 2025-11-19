@@ -1,0 +1,39 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.swp
+*.swo
+*~
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Build and deployment artifacts
+*.iso
+*.img
+
+# Local configuration files
+local-config.yaml
+local-config.json
+
+# Test files
+test-*
+tmp/
+
+# Backup files
+*.bak
+*.backup
+*.old

@@ -1,0 +1,24 @@
+# Netplan設定例
+# /etc/netplan/00-installer-config.yaml としてコピーして使用
+
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s3:  # ネットワークインターフェース名を環境に応じて変更
+      dhcp4: no
+      dhcp6: no
+      addresses:
+        - 192.168.100.1/24  # サーバーの静的IP
+      # 外部ネットワーク接続が必要な場合はゲートウェイを設定
+      # gateway4: 192.168.100.254
+      nameservers:
+        addresses:
+          - 8.8.8.8
+          - 8.8.4.4
+      # オプション: Jumbo Frame有効化（スイッチ対応の場合）
+      # mtu: 9000
+
+# 設定適用方法:
+# sudo cp netplan-example.yaml /etc/netplan/00-installer-config.yaml
+# sudo netplan apply
