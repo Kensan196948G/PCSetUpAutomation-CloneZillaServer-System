@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>会社キッティング自動化システム アーキテクチャ図</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 20px; }
+    h1, h2 { color: #333; }
+    .box {
+      border: 1px solid #999;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 10px;
+      background: #f9f9f9;
+    }
+    .layer-title {
+      font-weight: bold;
+      margin-top: 20px;
+      padding: 4px 8px;
+      background: #e3f2fd;
+      border-left: 4px solid #1976d2;
+    }
+    pre.ascii {
+      background: #111;
+      color: #0f0;
+      padding: 12px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+<h1>会社キッティング自動化システム アーキテクチャ図</h1>
+
+<p>本アーキテクチャは、以下のコンポーネントで構成される：</p>
+
+<div class="layer-title">レイヤ構成</div>
+
+<div class="box">
+  <ul>
+    <li><strong>クライアントPCレイヤー</strong>：新規購入PC（PXEブート, Windows 11）</li>
+    <li><strong>キッティング基盤レイヤー</strong>：DRBL/Clonezilla サーバ（Ubuntu）</li>
+    <li><strong>管理アプリケーションレイヤー</strong>：Flaskベース管理GUI＋API＋DB</li>
+    <li><strong>ディレクトリサービスレイヤー</strong>：AD ドメインコントローラ（ODJファイル生成）</li>
+    <li><strong>支援ツールレイヤー</strong>：ChatGPT＋スマホ（箱Serial OCR）</li>
+  </ul>
+</div>
+
+<h2>論理アーキテクチャ（ASCII図）</h2>
+
+<pre class="ascii">
++-------------------------------------------------------------+
+|                      社内ネットワーク (LAN)                 |
++-------------------------------------------------------------+
+
+   [現場担当者/IT管理者]
+            |
+            | 1. 箱のSerial撮影 &gt; ChatGPT OCR
+            v
+   +----------------------+
+   |  作業PC / 管理PC     |
+   | (ブラウザ＋ChatGPT)  |
+   +----------------------+
+            |
+            | 2. PC名(YYYYMMDDM) + Serial のCSV作成
+            v
+   +-------------------------------------------------------+
+   |        [管理アプリケーションレイヤー]                  |
+   |  Flask 管理GUI / API サーバ (Ubuntu 上)               |
+   |                                                       |
+   |  +------------------+   +--------------------------+  |
+   |  |  管理Web画面     |   |  REST API /pcinfo /log  |  |
+   |  +------------------+   +--------------------------+  |
+   |             |                      |                  |
+   |             |                      |                  |
+   |             v                      v                  |
+   |        +------------------------------------------+   |
+   |        |              DB (SQLite 等)              |   |
+   |        | pc_master, setup_logs, ...              |   |
+   |        +------------------------------------------+   |
+   +-------------------------------------------------------+
+             |
+             | ODJファイルパス参照
+             v
+   +-------------------------------------------------------+
+   |        [DRBL / Clonezilla サーバレイヤー]              |
+   |                                                       |
+   |  DHCP / TFTP / PXE / DRBL / Clonezilla SE            |
+   |                                                       |
+   |  /home/partimag/MASTER_2025_v1  (マスターイメージ)    |
+   |  /srv/odj/20251116M.txt  (ODJファイル群)              |
+   +-------------------------------------------------------+
+             ^
+             | PXEブート &amp; イメージ展開
+             |
+   +-------------------+    +-------------------+    +-------------------+
+   |   新規PC #1       |    |   新規PC #2       | ...|   新規PC #N       |
+   | (PXEブート、      |    |  (PXEブート)      |    |  (PXEブート)      |
+   |  Windows 11)      |    |                   |    |                   |
+   +-------------------+    +-------------------+    +-------------------+
+             |
+             | Windows 初回起動後:
+             |  - Serial取得
+             |  - API /pcinfo に問い合わせ
+             |  - PC名設定(YYYYMMDDM)
+             |  - ODJファイル取得・djoin
+             v
+   +-------------------------------------------------------+
+   |        [ディレクトリサービスレイヤー]                  |
+   |   Active Directory / ドメインコントローラ             |
+   |   - djoin /provision によりODJファイル生成           |
+   |   - OU配置                                            |
+   +-------------------------------------------------------+
+</pre>
+
+<h2>コンポーネント間の関係</h2>
+
+<ul>
+  <li>管理GUIは <strong>pc_master</strong> テーブルで「Serial ↔ PC名 ↔ ODJファイル」を管理する。</li>
+  <li>Windowsクライアントは初回起動時に Serial を取得し、API <code>/pcinfo</code> から PC名と ODJパスを取得する。</li>
+  <li>ODJファイルは AD 側で生成され、DRBL/管理サーバ上に配置される。</li>
+  <li>Clonezilla はマスターイメージ展開のみを担当し、設定・ドメイン参加は Windows 側スクリプトが担当する。</li>
+</ul>
+
+</body>
+</html>

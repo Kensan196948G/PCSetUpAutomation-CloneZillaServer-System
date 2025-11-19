@@ -1,0 +1,107 @@
+{
+  "timestamp": "2025-11-17T12:44:20.692255",
+  "results": {
+    "image_management": {},
+    "deployment": {},
+    "drbl_integration": {
+      "client_initialized": true,
+      "implemented_methods": [
+        "list_images",
+        "get_image_info",
+        "start_multicast_deployment",
+        "start_unicast_deployment",
+        "stop_deployment",
+        "get_deployment_status",
+        "list_odj_files",
+        "health_check"
+      ],
+      "missing_methods": [],
+      "implementation_rate": 100.0,
+      "health": {
+        "drbl_installed": true,
+        "image_home_exists": true,
+        "image_home_writable": true,
+        "odj_home_exists": true,
+        "odj_home_writable": false,
+        "image_count": 1,
+        "odj_count": 0,
+        "check_time": "2025-11-17T12:44:20.691578"
+      }
+    },
+    "api_endpoints": {
+      "images": {
+        "exists": true,
+        "implemented": [
+          "GET /api/images",
+          "GET /api/images/<image_name>",
+          "POST /api/images",
+          "DELETE /api/images/<image_name>"
+        ],
+        "missing": [],
+        "implementation_rate": 100.0
+      },
+      "deployment": {
+        "exists": true,
+        "implemented": [
+          "POST /api/deployment",
+          "GET /api/deployment",
+          "GET /api/deployment/<id>",
+          "GET /api/deployment/<id>/status",
+          "POST /api/deployment/<id>/start",
+          "POST /api/deployment/<id>/stop",
+          "PUT /api/deployment/<id>",
+          "DELETE /api/deployment/<id>"
+        ],
+        "missing": [],
+        "implementation_rate": 100.0
+      }
+    },
+    "web_ui": {
+      "exists": true,
+      "existing_templates": [
+        "images.html",
+        "create.html",
+        "list.html",
+        "detail.html",
+        "status.html",
+        "settings.html"
+      ],
+      "missing_templates": [],
+      "implementation_rate": 100.0
+    },
+    "tests": {
+      "exists": true,
+      "existing_tests": [
+        "integration/test_deployment.py",
+        "e2e/test_complete_workflow.py"
+      ],
+      "missing_tests": [],
+      "implementation_rate": 100.0
+    }
+  },
+  "summary": {
+    "image_features": {
+      "マスターイメージ一覧取得": true,
+      "マスターイメージ詳細取得": true,
+      "マスターイメージ削除": true,
+      "WebUI一覧表示": true,
+      "API一覧取得": true,
+      "API詳細取得": true
+    },
+    "deployment_features": {
+      "PC選択機能": true,
+      "マスターイメージ選択": true,
+      "展開モード選択": true,
+      "展開開始": true,
+      "展開停止": true,
+      "進捗モニタリング": true,
+      "WebUI展開一覧": true,
+      "WebUI展開詳細": true,
+      "WebUIステータス": true
+    },
+    "image_rate": 100.0,
+    "deployment_rate": 100.0,
+    "overall_rate": 100.0,
+    "missing_features": []
+  }
+}

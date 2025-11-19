@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>キッティング業務フロー（BPMN風）</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 20px; }
+    h1, h2 { color: #333; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 13px; }
+    th { background: #f0f0f0; }
+    .lane { background: #e3f2fd; font-weight: bold; }
+    pre { background: #111; color: #0f0; padding: 10px; font-size: 11px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+<h1>キッティング業務フロー図（BPMN風）</h1>
+
+<p>以下は、「PC納品」から「ユーザー渡し」までの業務フローを、BPMNライクに整理したもの。</p>
+
+<h2>スイムレーン表現</h2>
+
+<table>
+  <tr>
+    <th class="lane">レーン</th>
+    <th class="lane">担当</th>
+    <th class="lane">主なタスク</th>
+  </tr>
+  <tr>
+    <td>総務/購買</td>
+    <td>総務部</td>
+    <td>
+      <ul>
+        <li>PCの発注</li>
+        <li>納品物の受け取り・検品</li>
+        <li>PC箱の保管・ITシステム部門への引き渡し</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td>ITシステム部門（前処理）</td>
+    <td>IT部門</td>
+    <td>
+      <ul>
+        <li>箱側面のSerial番号をスマホで撮影</li>
+        <li>ChatGPTでSerial OCR → CSV化</li>
+        <li>導入日ベースPC名生成（YYYYMMDDM）</li>
+        <li>管理GUIにCSVインポート</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td>管理システム（DRBL/GUI）</td>
+    <td>システム</td>
+    <td>
+      <ul>
+        <li>pc_masterテーブルに Serial/PC名/ODJパス登録</li>
+        <li>ODJファイルの格納</li>
+        <li>API /pcinfo /log 提供</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td>DRBL/Clonezillaサーバ</td>
+    <td>システム</td>
+    <td>
+      <ul>
+        <li>PXEブート提供</li>
+        <li>マスターイメージの配信</li>
+        <li>展開ログの保持（オプション）</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td>WindowsクライアントPC</td>
+    <td>PC本体</td>
+    <td>
+      <ul>
+        <li>PXEブートでClonezilla起動</li>
+        <li>マスターイメージ受信</li>
+        <li>初回起動 → Serial取得・API問い合わせ</li>
+        <li>PC名設定・ODJ適用・再起動</li>
+        <li>Windows Update・アプリ導入</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td>ITシステム部門（確認）</td>
+    <td>IT部門</td>
+    <td>
+      <ul>
+        <li>管理GUIでステータス確認</li>
+        <li>不良があれば再展開 or 再実行</li>
+        <li>ユーザーへPC引き渡し</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<h2>簡易BPMN（テキスト表現）</h2>
+<pre>
+開始イベント: PC納品
+  ↓
+総務：PC検品・IT部門へ引き渡し
+  ↓
+IT部門：箱Serial撮影 → ChatGPT OCR → PC名生成(YYYYMMDDM) → CSV作成
+  ↓
+IT部門：管理GUIへCSVインポート（pc_master登録）
+  ↓
+AD管理者：PC名ごとのODJファイル生成 → DRBLサーバへ配置
+  ↓
+IT部門：PCを展開用LANへ接続しPXEブート
+  ↓
+DRBL/Clonezilla：マスターイメージ展開
+  ↓
+Windows PC：初回起動 → 初期スクリプト実行
+  ↓
+スクリプト：Serial取得 → API /pcinfo → PC名決定＆ODJパス取得
+  ↓
+スクリプト：PC名設定 → ODJ適用 → 再起動
+  ↓
+Windows PC：ドメイン参加済みで起動
+  ↓
+スクリプト：Windows Update / アプリ導入 / 完了ログ送信
+  ↓
+IT部門：管理GUIでステータス確認
+  ↓
+ユーザーへ引き渡し
+  ↓
+終了イベント：キッティング完了
+</pre>
+
+</body>
+</html>

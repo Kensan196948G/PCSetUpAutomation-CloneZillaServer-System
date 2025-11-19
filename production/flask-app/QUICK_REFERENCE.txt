@@ -1,0 +1,96 @@
+================================================================================
+  PC EDIT FUNCTIONALITY TEST - QUICK REFERENCE CARD
+================================================================================
+
+START HERE
+----------
+bash RUN_TEST.sh
+
+That's the only command you need!
+
+
+BEFORE TESTING
+--------------
+1. Start Flask server in another terminal:
+   cd /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/flask-app
+   python3 app.py
+
+2. Run the test:
+   bash RUN_TEST.sh
+
+
+ALTERNATIVE TEST METHODS
+------------------------
+Detailed test:     python3 final_test_report.py
+Shell test:        bash automated_test.sh
+Database only:     python3 simple_test.py
+Manual endpoint:   curl http://localhost:5000/pcs/edit/1
+
+
+TEST DATA
+---------
+Serial:    TEST001
+PCName:    20251117M
+ODJ Path:  /odj/20251117M.txt
+Database:  /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/flask-app/pc_setup.db
+
+
+WHAT GETS TESTED
+----------------
+✓ File structure (app.py, templates, database)
+✓ Database schema and test data
+✓ Flask app code and routes
+✓ Edit endpoint HTTP response
+
+
+SUCCESS LOOKS LIKE
+------------------
+✓ File Structure      : PASSED
+✓ Database Setup      : PASSED
+✓ App Code Analysis   : PASSED
+✓ Edit Endpoint       : PASSED
+
+✓ ALL TESTS PASSED
+
+
+COMMON ERROR: SERVER NOT RUNNING
+---------------------------------
+Error:    "Flask server is NOT running"
+Fix:      python3 app.py
+
+
+FILES YOU NEED TO KNOW
+----------------------
+RUN_TEST.sh              <- Start here (main test)
+README_TEST.md           <- Quick start guide
+TEST_SUMMARY.md          <- Full documentation
+final_test_report.py     <- Detailed test script
+
+
+MANUAL BROWSER TEST
+-------------------
+http://localhost:5000/pcs/edit/1
+
+
+CHECK DATABASE MANUALLY
+-----------------------
+sqlite3 pc_setup.db
+  > SELECT * FROM pc_master;
+  > .quit
+
+
+NEED HELP?
+----------
+README_TEST.md        - Quick start
+TEST_SUMMARY.md       - Troubleshooting
+TEST_INSTRUCTIONS.md  - Detailed steps
+
+
+MAKE SCRIPTS EXECUTABLE
+------------------------
+bash MAKE_EXECUTABLE.sh
+
+
+================================================================================
+COMMAND TO RUN: bash RUN_TEST.sh
+================================================================================

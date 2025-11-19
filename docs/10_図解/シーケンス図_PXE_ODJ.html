@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>PXEブート〜ODJ完了 シーケンス図</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 20px; }
+    h1, h2 { color: #333; }
+    pre.seq {
+      background: #111;
+      color: #0f0;
+      padding: 12px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 11px;
+    }
+    ol { margin-left: 20px; }
+  </style>
+</head>
+<body>
+<h1>PXEブート〜ODJ完了 シーケンス図</h1>
+
+<h2>1. 参加コンポーネント</h2>
+<ul>
+  <li>ClientPC（新規PC）</li>
+  <li>DHCP/TFTPサーバ（DRBLサーバ内）</li>
+  <li>Clonezilla/DRBLサービス</li>
+  <li>管理APIサーバ（Flask）</li>
+  <li>Active Directory（ODJファイル生成済み）</li>
+</ul>
+
+<h2>2. テキストベース シーケンス</h2>
+<pre class="seq">
+ClientPC        DHCP/TFTP        DRBL/Clonezilla      API Server        AD/DC
+   |                |                  |                   |              |
+1. |--- PXE DISCOVER --->              |                   |              |
+   |                |--- OFFER ------->|                   |              |
+   |<--- ACK/BOOT INFO --------------- |                   |              |
+   |--- TFTP GET pxelinux.0 ---------->|                   |              |
+   |                |                  |                   |              |
+2. |==== Clonezilla カーネル/イメージ起動 ===========================>    |
+   |                |                  |                   |              |
+3. |--- マスターイメージ要求 --------->|                   |              |
+   |                |==== イメージ転送(マルチキャスト/ユニ) ========>    |
+   |                |                  |                   |              |
+4. |(ローカルディスクへ書き込み)      |                   |              |
+   |--- 再起動 ----------------------->|                   |              |
+   |                |                  |                   |              |
+5. |==== Windows 初回起動 ==========================================>    |
+   |                |                  |                   |              |
+6. |(自動ログオン & 初期PSスクリプト起動)                              |
+   |                |                  |                   |              |
+7. |--- Get SerialNumber --------------|                   |              |
+   |                |                  |                   |              |
+8. |--- HTTP GET /api/pcinfo?serial=ABC123456 ----------->|              |
+   |                |                  |                   |              |
+   |<-- {pcname:20251116M, odj:/odj/20251116M.txt } ------|              |
+   |                |                  |                   |              |
+9. |(PC名 = 20251116M に設定)                                                 |
+   |                |                  |                   |              |
+10.|(C:\ODJ\20251116M.txt を取得済み or ローカルに配置)                     |
+   |                |                  |                   |              |
+11.|--- djoin /requestODJ /loadfile C:\ODJ\20251116M.txt ---------------> AD
+   |                |                  |                   |              |
+   |<-- AD上にコンピュータアカウント/ODJ適用 ------------------------     |
+   |                |                  |                   |              |
+12.|--- 再起動 ----------------------->|                   |              |
+   |                |                  |                   |              |
+13.|==== Windows (ドメイン参加済み) で起動 =========================>     |
+   |                |                  |                   |              |
+14.|(後処理: WindowsUpdate, アプリ導入, /api/log で結果送信)              |
+   |                |                  |                   |              |
+</pre>
+
+<h2>3. シーケンス要点</h2>
+<ol>
+  <li>PXE〜イメージ展開までは Clonezilla/DRBL が担当。</li>
+  <li>PC名決定とODJ適用は Windows 起動後、PowerShell スクリプトが担当。</li>
+  <li>APIサーバは Serial→PC名→ODJパス のマッピングを返すのみ。</li>
+  <li>AD側は既に ODJファイルが生成済みである前提。</li>
+</ol>
+
+</body>
+</html>

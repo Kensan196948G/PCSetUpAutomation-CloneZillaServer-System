@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+
+{% block title %}展開ステータス - PC Setup Automation{% endblock %}
+
+{% block extra_css %}
+<style>
+.status-card {
+    transition: transform 0.2s;
+}
+
+.status-card:hover {
+    transform: translateY(-5px);
+}
+
+.pc-card {
+    border-left: 4px solid #dee2e6;
+    transition: all 0.2s;
+}
+
+.pc-card.status-completed {
+    border-left-color: #198754;
+}
+
+.pc-card.status-in-progress {
+    border-left-color: #ffc107;
+}
+
+.pc-card.status-failed {
+    border-left-color: #dc3545;
+}
+
+.pc-card.status-pending {
+    border-left-color: #6c757d;
+}
+
+.progress-animated {
+    animation: progress-pulse 2s infinite;
+}
+
+@keyframes progress-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.auto-refresh-badge {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-5 fw-bold">
+                    <i class="bi bi-bar-chart text-primary"></i>
+                    展開ステータス
+                </h1>
+                <p class="lead text-muted">リアルタイムPCセットアップ進捗モニタリング</p>
+            </div>
+            <div>
+                <button class="btn btn-outline-primary" id="toggleAutoRefresh">
+                    <i class="bi bi-arrow-clockwise me-2"></i>
+                    自動更新: <span id="autoRefreshStatus">OFF</span>
+                </button>
+                <button class="btn btn-primary ms-2" onclick="location.reload()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>今すぐ更新
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm status-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="bi bi-laptop"></i> 展開予定
+                        </h6>
+                        <h2 class="mb-0 fw-bold">{{ total_deploys }}</h2>
+                    </div>
+                    <div class="bg-secondary bg-opacity-10 rounded-circle p-3">
+                        <i class="bi bi-calendar-check fs-2 text-secondary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm status-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="bi bi-check-circle"></i> 完了
+                        </h6>
+                        <h2 class="mb-0 fw-bold text-success">{{ completed_count }}</h2>
+                    </div>
+                    <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                        <i class="bi bi-check-circle-fill fs-2 text-success"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: {{ (completed_count / total_deploys * 100) if total_deploys > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm status-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="bi bi-hourglass-split"></i> 進行中
+                        </h6>
+                        <h2 class="mb-0 fw-bold text-warning">{{ in_progress_count }}</h2>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                        <i class="bi bi-arrow-repeat fs-2 text-warning progress-animated"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-warning" style="width: {{ (in_progress_count / total_deploys * 100) if total_deploys > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm status-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="bi bi-exclamation-triangle"></i> 失敗
+                        </h6>
+                        <h2 class="mb-0 fw-bold text-danger">{{ failed_count }}</h2>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 rounded-circle p-3">
+                        <i class="bi bi-x-circle-fill fs-2 text-danger"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-danger" style="width: {{ (failed_count / total_deploys * 100) if total_deploys > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-graph-up text-info"></i>
+                    展開進捗サマリー
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold">全体進捗</span>
+                    <span class="fw-bold">{{ overall_progress }}%</span>
+                </div>
+                <div class="progress" style="height: 30px;">
+                    <div class="progress-bar bg-success" style="width: {{ (completed_count / total_deploys * 100) if total_deploys > 0 else 0 }}%">
+                        完了 {{ completed_count }}
+                    </div>
+                    <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
+                         style="width: {{ (in_progress_count / total_deploys * 100) if total_deploys > 0 else 0 }}%">
+                        進行中 {{ in_progress_count }}
+                    </div>
+                    <div class="progress-bar bg-danger" style="width: {{ (failed_count / total_deploys * 100) if total_deploys > 0 else 0 }}%">
+                        失敗 {{ failed_count }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter and Search -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="filterStatus" class="form-label fw-bold">ステータスフィルター</label>
+                        <select class="form-select" id="filterStatus">
+                            <option value="">すべて</option>
+                            <option value="completed">完了</option>
+                            <option value="in_progress">進行中</option>
+                            <option value="failed">失敗</option>
+                            <option value="pending">待機中</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="searchPC" class="form-label fw-bold">PC検索</label>
+                        <input type="text" class="form-control" id="searchPC" placeholder="PC名またはSerial番号で検索...">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">表示件数</label>
+                        <select class="form-select" id="itemsPerPage">
+                            <option value="10">10件</option>
+                            <option value="20" selected>20件</option>
+                            <option value="50">50件</option>
+                            <option value="100">100件</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PC Deployment Cards -->
+<div class="row g-4" id="pcDeploymentList">
+    {% if deploy_items %}
+        {% for item in deploy_items %}
+        <div class="col-12 col-md-6 col-xl-4 pc-card-wrapper"
+             data-status="{{ item.status }}"
+             data-pcname="{{ item.pcname }}"
+             data-serial="{{ item.serial }}">
+            <div class="card border-0 shadow-sm pc-card status-{{ item.status }} h-100">
+                <div class="card-body">
+                    <!-- PC Header -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1 fw-bold">
+                                <i class="bi bi-pc-display me-2"></i>{{ item.pcname }}
+                            </h5>
+                            <small class="text-muted">
+                                <i class="bi bi-upc-scan me-1"></i>{{ item.serial }}
+                            </small>
+                        </div>
+                        <span class="badge
+                            {% if item.status == 'completed' %}bg-success
+                            {% elif item.status == 'in_progress' %}bg-warning
+                            {% elif item.status == 'failed' %}bg-danger
+                            {% else %}bg-secondary{% endif %}">
+                            {% if item.status == 'completed' %}
+                                <i class="bi bi-check-circle me-1"></i>完了
+                            {% elif item.status == 'in_progress' %}
+                                <i class="bi bi-arrow-repeat me-1"></i>進行中
+                            {% elif item.status == 'failed' %}
+                                <i class="bi bi-x-circle me-1"></i>失敗
+                            {% else %}
+                                <i class="bi bi-clock me-1"></i>待機中
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    {% if item.status == 'in_progress' %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="text-muted">セットアップ進行中...</small>
+                            <small class="text-muted">{{ item.progress }}%</small>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning"
+                                 style="width: {{ item.progress }}%">
+                                {{ item.progress }}%
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Deployment Steps -->
+                    <div class="deployment-steps">
+                        <small class="text-muted fw-bold d-block mb-2">セットアップステップ:</small>
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item px-0 py-1 border-0">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <small>PXEブート・イメージ展開</small>
+                            </div>
+                            <div class="list-group-item px-0 py-1 border-0">
+                                <i class="bi {{ 'bi-check-circle-fill text-success' if item.status in ['completed', 'in_progress'] else 'bi-circle text-muted' }} me-2"></i>
+                                <small>PC名設定</small>
+                            </div>
+                            <div class="list-group-item px-0 py-1 border-0">
+                                <i class="bi {{ 'bi-check-circle-fill text-success' if item.status == 'completed' else 'bi-arrow-repeat text-warning' if item.status == 'in_progress' else 'bi-circle text-muted' }} me-2"></i>
+                                <small>ODJ適用・ドメイン参加</small>
+                            </div>
+                            <div class="list-group-item px-0 py-1 border-0">
+                                <i class="bi {{ 'bi-check-circle-fill text-success' if item.status == 'completed' else 'bi-circle text-muted' }} me-2"></i>
+                                <small>Windows Update</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timestamp -->
+                    <div class="mt-3 pt-3 border-top">
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>
+                            {% if item.timestamp %}
+                                {{ item.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                            {% else %}
+                                開始待ち
+                            {% endif %}
+                        </small>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-outline-primary w-100" onclick="viewDetails('{{ item.pcname }}')">
+                            <i class="bi bi-eye me-2"></i>詳細を見る
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="text-muted mt-3">展開中のPCはありません</p>
+                <a href="{{ url_for('views.index') }}" class="btn btn-primary mt-2">
+                    <i class="bi bi-house me-2"></i>ダッシュボードに戻る
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- No Results Message -->
+<div id="noResults" class="text-center py-5" style="display: none;">
+    <i class="bi bi-search fs-1 text-muted"></i>
+    <p class="text-muted mt-3">検索条件に一致するPCがありません</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let autoRefreshInterval = null;
+let autoRefreshEnabled = false;
+
+// Auto-refresh toggle
+document.getElementById('toggleAutoRefresh').addEventListener('click', function() {
+    autoRefreshEnabled = !autoRefreshEnabled;
+    const statusSpan = document.getElementById('autoRefreshStatus');
+
+    if (autoRefreshEnabled) {
+        statusSpan.textContent = 'ON';
+        statusSpan.classList.add('auto-refresh-badge');
+        this.classList.remove('btn-outline-primary');
+        this.classList.add('btn-primary');
+
+        autoRefreshInterval = setInterval(() => {
+            location.reload();
+        }, 5000); // 5秒間隔
+    } else {
+        statusSpan.textContent = 'OFF';
+        statusSpan.classList.remove('auto-refresh-badge');
+        this.classList.remove('btn-primary');
+        this.classList.add('btn-outline-primary');
+
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+        }
+    }
+});
+
+// Filter by status
+document.getElementById('filterStatus').addEventListener('change', function() {
+    filterPCs();
+});
+
+// Search by PC name or serial
+document.getElementById('searchPC').addEventListener('input', function() {
+    filterPCs();
+});
+
+// Filter function
+function filterPCs() {
+    const statusFilter = document.getElementById('filterStatus').value;
+    const searchTerm = document.getElementById('searchPC').value.toLowerCase();
+    const pcCards = document.querySelectorAll('.pc-card-wrapper');
+    let visibleCount = 0;
+
+    pcCards.forEach(card => {
+        const status = card.dataset.status;
+        const pcname = card.dataset.pcname.toLowerCase();
+        const serial = card.dataset.serial.toLowerCase();
+
+        const statusMatch = !statusFilter || status === statusFilter;
+        const searchMatch = !searchTerm || pcname.includes(searchTerm) || serial.includes(searchTerm);
+
+        if (statusMatch && searchMatch) {
+            card.style.display = '';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+}
+
+// View details
+function viewDetails(pcname) {
+    alert('詳細ビュー機能は実装予定です: ' + pcname);
+    // TODO: Implement modal or detail page
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

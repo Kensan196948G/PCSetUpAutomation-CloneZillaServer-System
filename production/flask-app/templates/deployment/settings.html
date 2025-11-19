@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block title %}展開設定 - PC Setup Automation{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('views.index') }}">ダッシュボード</a></li>
+                <li class="breadcrumb-item active" aria-current="page">展開設定</li>
+            </ol>
+        </nav>
+        <h1 class="display-5 fw-bold">
+            <i class="bi bi-gear text-primary"></i>
+            展開設定
+        </h1>
+        <p class="lead text-muted">Clonezilla展開とPXEブート設定の管理</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <!-- Clonezilla Image Path Settings -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-folder"></i>
+                    Clonezillaイメージパス設定
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="imagePath" class="form-label fw-bold">イメージ格納パス</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="imagePath"
+                               value="{{ config.CLONEZILLA_IMAGE_PATH }}"
+                               placeholder="/mnt/Linux-ExHDD/Ubuntu-ExHDD">
+                        <button class="btn btn-outline-secondary" type="button" id="validatePathBtn">
+                            <i class="bi bi-check-circle me-1"></i>検証
+                        </button>
+                        <button class="btn btn-primary" type="button" id="updatePathBtn">
+                            <i class="bi bi-save me-1"></i>更新
+                        </button>
+                    </div>
+                    <div id="pathValidationResult" class="mt-2"></div>
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        デフォルト: /mnt/Linux-ExHDD/Ubuntu-ExHDD<br>
+                        書き込み権限が必要です。パスが存在しない場合は事前に作成してください。
+                    </small>
+                </div>
+
+                <!-- Path Information Display -->
+                <div class="alert alert-info" id="pathInfo" style="display:none;">
+                    <h6><i class="bi bi-info-circle me-2"></i>パス情報</h6>
+                    <ul class="mb-0">
+                        <li>パス: <code id="infoPath"></code></li>
+                        <li>書き込み可能: <span id="infoWritable"></span></li>
+                        <li>イメージ数: <span id="infoImageCount"></span></li>
+                        <li>空き容量: <span id="infoDiskFree"></span></li>
+                        <li>使用容量: <span id="infoDiskUsed"></span></li>
+                        <li>合計容量: <span id="infoDiskTotal"></span></li>
+                        <li>使用率: <span id="infoDiskPercent"></span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clonezilla Settings -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-hdd-rack text-info"></i>
+                    Clonezilla展開設定
+                </h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="compressionType" class="form-label fw-bold">圧縮形式</label>
+                            <select class="form-select" id="compressionType">
+                                <option value="zstd" selected>zstd（推奨）</option>
+                                <option value="gzip">gzip</option>
+                                <option value="lz4">lz4</option>
+                                <option value="none">なし</option>
+                            </select>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                zstdは速度と圧縮率のバランスが良好
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="multicastMode" class="form-label fw-bold">展開モード</label>
+                            <select class="form-select" id="multicastMode">
+                                <option value="multicast" selected>マルチキャスト（複数台同時）</option>
+                                <option value="unicast">ユニキャスト（個別）</option>
+                            </select>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                10〜20台同時展開時はマルチキャスト推奨
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="maxClients" class="form-label fw-bold">最大同時展開台数</label>
+                            <input type="number" class="form-control" id="maxClients" value="20" min="1" max="50">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="deployTimeout" class="form-label fw-bold">タイムアウト（分）</label>
+                            <input type="number" class="form-control" id="deployTimeout" value="90" min="30" max="180">
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="autoReboot" checked>
+                                <label class="form-check-label" for="autoReboot">
+                                    <strong>展開完了後に自動再起動</strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="verifyImage" checked>
+                                <label class="form-check-label" for="verifyImage">
+                                    <strong>イメージ整合性チェックを実施</strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-2"></i>設定を保存
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- PXE Boot Settings -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-router text-warning"></i>
+                    PXEブート設定
+                </h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="pxeTimeout" class="form-label fw-bold">PXEブートタイムアウト（秒）</label>
+                            <input type="number" class="form-control" id="pxeTimeout" value="10" min="5" max="60">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="defaultBoot" class="form-label fw-bold">デフォルトブート</label>
+                            <select class="form-select" id="defaultBoot">
+                                <option value="clonezilla" selected>Clonezilla（展開）</option>
+                                <option value="local">ローカルディスク</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="pxeMenuTitle" class="form-label fw-bold">PXEメニュータイトル</label>
+                            <input type="text" class="form-control" id="pxeMenuTitle" value="PC Setup Automation - Clonezilla">
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enablePXE" checked>
+                                <label class="form-check-label" for="enablePXE">
+                                    <strong>PXEブートを有効化</strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-2"></i>設定を保存
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Network Settings -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-ethernet text-success"></i>
+                    ネットワーク設定
+                </h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="dhcpRange" class="form-label fw-bold">DHCPレンジ</label>
+                            <input type="text" class="form-control" id="dhcpRange" value="192.168.1.100 - 192.168.1.200" readonly>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="serverIP" class="form-label fw-bold">DRBLサーバーIP</label>
+                            <input type="text" class="form-control" id="serverIP" value="192.168.1.10" readonly>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="subnetMask" class="form-label fw-bold">サブネットマスク</label>
+                            <input type="text" class="form-control" id="subnetMask" value="255.255.255.0" readonly>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="gateway" class="form-label fw-bold">ゲートウェイ</label>
+                            <input type="text" class="form-control" id="gateway" value="192.168.1.1" readonly>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                ネットワーク設定の変更は直接DRBLサーバーで実施してください
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Current Settings Summary -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-clipboard-check"></i>
+                    現在の設定
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <strong>圧縮:</strong> zstd
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <strong>モード:</strong> マルチキャスト
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <strong>最大台数:</strong> 20台
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <strong>タイムアウト:</strong> 90分
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <strong>自動再起動:</strong> 有効
+                    </li>
+                    <li class="mb-0">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <strong>整合性チェック:</strong> 有効
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Performance Tips -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-lightbulb text-warning"></i>
+                    パフォーマンスヒント
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="small mb-0">
+                    <li class="mb-2">
+                        <strong>マルチキャスト使用時:</strong><br>
+                        ネットワークスイッチでIGMP Snooping有効化推奨
+                    </li>
+                    <li class="mb-2">
+                        <strong>大量展開時:</strong><br>
+                        同時展開は20台以下に制限（性能劣化防止）
+                    </li>
+                    <li class="mb-2">
+                        <strong>圧縮形式:</strong><br>
+                        zstdで展開速度と容量のバランス最適
+                    </li>
+                    <li class="mb-0">
+                        <strong>展開時間目安:</strong><br>
+                        60〜90分（イメージサイズによる）
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-lightning-charge text-warning"></i>
+                    クイックアクション
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('views.image_management') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-disc me-2"></i>マスターイメージ管理
+                    </a>
+                    <a href="{{ url_for('views.deploy_status') }}" class="btn btn-outline-info">
+                        <i class="bi bi-bar-chart me-2"></i>展開ステータス
+                    </a>
+                    <button class="btn btn-outline-success" onclick="testPXEBoot()">
+                        <i class="bi bi-play-circle me-2"></i>PXEブートテスト
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Path validation
+document.getElementById('validatePathBtn').addEventListener('click', function() {
+    const path = document.getElementById('imagePath').value;
+    const resultDiv = document.getElementById('pathValidationResult');
+    const infoDiv = document.getElementById('pathInfo');
+
+    if (!path) {
+        resultDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>パスを入力してください</div>';
+        infoDiv.style.display = 'none';
+        return;
+    }
+
+    // Show loading
+    resultDiv.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split me-2"></i>検証中...</div>';
+
+    fetch('/api/settings/image-path/validate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({path: path})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            resultDiv.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>パスは有効です</div>';
+            infoDiv.style.display = 'block';
+            document.getElementById('infoPath').textContent = data.path;
+            document.getElementById('infoWritable').innerHTML = data.writable ?
+                '<span class="badge bg-success">はい</span>' :
+                '<span class="badge bg-danger">いいえ</span>';
+            document.getElementById('infoImageCount').textContent = data.image_count + ' 個';
+
+            // Display disk space information
+            if (data.disk_free) {
+                document.getElementById('infoDiskFree').textContent = data.disk_free.free || '不明';
+                document.getElementById('infoDiskUsed').textContent = data.disk_free.used || '不明';
+                document.getElementById('infoDiskTotal').textContent = data.disk_free.total || '不明';
+                document.getElementById('infoDiskPercent').innerHTML =
+                    `<span class="badge bg-${getUsageColor(data.disk_free.percent_used)}">${data.disk_free.percent_used || '不明'}</span>`;
+            }
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>${data.error}</div>`;
+            infoDiv.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>エラー: ${error.message}</div>`;
+        infoDiv.style.display = 'none';
+    });
+});
+
+// Path update
+document.getElementById('updatePathBtn').addEventListener('click', function() {
+    const path = document.getElementById('imagePath').value;
+
+    if (!path) {
+        alert('パスを入力してください');
+        return;
+    }
+
+    if (!confirm(`イメージパスを ${path} に変更しますか？\n\n注意: この変更は即座に適用され、.envファイルに保存されます。`)) {
+        return;
+    }
+
+    // Show loading
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>更新中...';
+
+    fetch('/api/settings/image-path', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({path: path})
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+
+        if (data.success) {
+            alert('成功: ' + data.message);
+            location.reload();
+        } else {
+            alert('エラー: ' + (data.error || '不明なエラー'));
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        alert('エラー: ' + error.message);
+    });
+});
+
+// Helper function to get color based on disk usage
+function getUsageColor(percentStr) {
+    if (!percentStr || percentStr === '不明') return 'secondary';
+    const percent = parseFloat(percentStr);
+    if (percent < 60) return 'success';
+    if (percent < 80) return 'warning';
+    return 'danger';
+}
+
+function testPXEBoot() {
+    alert('PXEブートテスト機能は実装予定です');
+    // TODO: Implement PXE boot test
+}
+
+// Auto-save settings on change
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        alert('設定を保存しました（実装予定）');
+        // TODO: Implement settings save
+    });
+});
+</script>
+{% endblock %}

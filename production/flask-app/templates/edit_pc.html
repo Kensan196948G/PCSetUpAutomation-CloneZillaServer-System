@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}PC情報編集 - PC Setup Automation{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('views.index') }}">ホーム</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('views.list_pcs') }}">PC一覧</a></li>
+                <li class="breadcrumb-item active" aria-current="page">PC編集</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<h1 class="mb-4">
+    <i class="bi bi-pencil-square text-primary"></i>
+    PC情報編集
+</h1>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 pt-3">
+        <h5 class="mb-0">PC: {{ pc.pcname }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('views.edit_pc', pc_id=pc.id) }}" class="needs-validation" novalidate>
+            <div class="mb-3">
+                <label for="serial" class="form-label">
+                    <i class="bi bi-upc-scan me-2"></i>Serial番号
+                </label>
+                <input type="text" class="form-control" id="serial" name="serial"
+                       value="{{ pc.serial }}" disabled>
+                <small class="form-text text-muted">Serial番号は変更できません</small>
+            </div>
+
+            <div class="mb-3">
+                <label for="pcname" class="form-label">
+                    <i class="bi bi-pc-display me-2"></i>PC名（YYYYMMDDM形式）
+                </label>
+                <input type="text" class="form-control" id="pcname" name="pcname"
+                       value="{{ pc.pcname }}"
+                       placeholder="例: 20251116M"
+                       pattern="\d{8}M"
+                       required>
+                <div class="invalid-feedback">
+                    PC名はYYYYMMDDM形式で入力してください（例: 20251116M）
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="odj_path" class="form-label">
+                    <i class="bi bi-file-earmark me-2"></i>ODJファイルパス（オプション）
+                </label>
+                <input type="text" class="form-control" id="odj_path" name="odj_path"
+                       value="{{ pc.odj_path if pc.odj_path else '' }}"
+                       placeholder="例: /srv/odj/20251116M.txt">
+                <small class="form-text text-muted">空欄の場合はODJファイルなし</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-info-circle me-2"></i>登録情報
+                </label>
+                <div class="alert alert-info">
+                    <small>
+                        <strong>登録日時:</strong> {{ pc.created_at.strftime('%Y-%m-%d %H:%M:%S') if pc.created_at else 'N/A' }}<br>
+                        {% if pc.updated_at %}
+                        <strong>最終更新:</strong> {{ pc.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-2"></i>更新
+                </button>
+                <a href="{{ url_for('views.list_pcs') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle me-2"></i>キャンセル
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="mt-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 pt-3">
+            <h5 class="mb-0">
+                <i class="bi bi-journal-text text-info"></i>
+                関連セットアップログ
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">このPCに関連するセットアップログはこちらに表示されます</p>
+            <a href="{{ url_for('views.list_logs') }}?serial={{ pc.serial }}" class="btn btn-sm btn-outline-info">
+                <i class="bi bi-search me-2"></i>ログを確認
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// PC name format validation
+document.getElementById('pcname').addEventListener('input', function() {
+    const pattern = /^\d{8}M$/;
+    if (!pattern.test(this.value) && this.value.length > 0) {
+        this.setCustomValidity('PC名はYYYYMMDDM形式で入力してください（例: 20251116M）');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+</script>
+{% endblock %}

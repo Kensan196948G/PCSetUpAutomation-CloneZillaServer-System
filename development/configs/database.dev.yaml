@@ -1,0 +1,71 @@
+# 開発環境用データベース設定ファイル
+
+database:
+  type: sqlite
+  path: /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/development/data/test-db/pcsetup.db
+  echo: true
+  pool_size: 5
+  max_overflow: 10
+  pool_recycle: 3600
+
+  # テーブル定義
+  tables:
+    pc_master:
+      columns:
+        - name: id
+          type: INTEGER
+          primary_key: true
+          autoincrement: true
+        - name: serial
+          type: TEXT
+          unique: true
+          nullable: false
+        - name: pcname
+          type: TEXT
+          nullable: false
+        - name: odj_path
+          type: TEXT
+          nullable: true
+        - name: created_at
+          type: DATETIME
+          default: CURRENT_TIMESTAMP
+        - name: updated_at
+          type: DATETIME
+          default: CURRENT_TIMESTAMP
+
+    setup_logs:
+      columns:
+        - name: id
+          type: INTEGER
+          primary_key: true
+          autoincrement: true
+        - name: serial
+          type: TEXT
+          nullable: false
+        - name: pcname
+          type: TEXT
+          nullable: true
+        - name: status
+          type: TEXT
+          nullable: false
+        - name: timestamp
+          type: DATETIME
+          default: CURRENT_TIMESTAMP
+        - name: logs
+          type: TEXT
+          nullable: true
+        - name: error_message
+          type: TEXT
+          nullable: true
+
+# マイグレーション設定
+migration:
+  enabled: true
+  auto_upgrade: true
+  backup_before_migration: true
+
+# 開発用設定
+development:
+  seed_data: true
+  reset_on_start: false
+  debug_queries: true

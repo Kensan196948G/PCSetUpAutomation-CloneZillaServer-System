@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}PC管理 - PC Setup Automation{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">PC管理</h1>
+
+<div class="mb-3">
+    <a href="{{ url_for('views.add_pc') }}" class="btn btn-primary">新規PC登録</a>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Serial番号</th>
+            <th>PC名</th>
+            <th>ODJパス</th>
+            <th>登録日時</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if pcs %}
+            {% for pc in pcs %}
+            <tr>
+                <td>{{ pc.id }}</td>
+                <td>{{ pc.serial }}</td>
+                <td>{{ pc.pcname }}</td>
+                <td>{{ pc.odj_path or 'N/A' }}</td>
+                <td>{{ pc.created_at.strftime('%Y-%m-%d %H:%M') if pc.created_at else 'N/A' }}</td>
+                <td>
+                    <a href="#" class="btn btn-sm btn-info">詳細</a>
+                </td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="6" class="text-center">登録されているPCはありません</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+{% endblock %}

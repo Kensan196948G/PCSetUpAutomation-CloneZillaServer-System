@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}新規展開作成 - PC Setup Automation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('views.index') }}">
+                    <i class="bi bi-house-door me-1"></i>ホーム
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('views.deployment_list') }}">
+                    <i class="bi bi-cloud-arrow-down me-1"></i>展開管理
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                新規展開作成
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="mb-4">
+        <h1 class="h3">
+            <i class="bi bi-plus-circle me-2"></i>新規展開作成
+        </h1>
+        <p class="text-muted">Clonezillaマスターイメージを複数のPCに展開します</p>
+    </div>
+
+    <!-- Create Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">展開設定</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('api.deployment.create_deployment') }}" id="deploymentForm">
+                        <!-- Image Selection -->
+                        <div class="mb-4">
+                            <label for="image_name" class="form-label">
+                                <i class="bi bi-hdd me-1"></i>マスターイメージ
+                                <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="image_name" name="image_name" required>
+                                <option value="">イメージを選択してください</option>
+                                {% for image in images %}
+                                <option value="{{ image.name }}">
+                                    {{ image.name }} ({{ image.size }}, {{ image.created_at }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                展開するClonezillaマスターイメージを選択してください
+                            </div>
+                        </div>
+
+                        <!-- Target Selection -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-pc-display me-1"></i>展開対象PC
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="target_type"
+                                           id="target_all" value="all" checked>
+                                    <label class="form-check-label" for="target_all">
+                                        全てのPC（{{ total_pcs }}台）
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="target_type"
+                                           id="target_select" value="select">
+                                    <label class="form-check-label" for="target_select">
+                                        個別選択
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="pcSelectContainer" style="display: none;">
+                                <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                    {% for pc in pcs %}
+                                    <div class="form-check">
+                                        <input class="form-check-input pc-checkbox" type="checkbox"
+                                               name="target_pcs[]" value="{{ pc.id }}"
+                                               id="pc_{{ pc.id }}">
+                                        <label class="form-check-label" for="pc_{{ pc.id }}">
+                                            <strong>{{ pc.pcname }}</strong> - {{ pc.serial }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="form-text mt-2">
+                                    <span id="selectedCount">0</span> 台選択中
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deployment Options -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-gear me-1"></i>展開オプション
+                            </label>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="auto_reboot"
+                                       id="auto_reboot" checked>
+                                <label class="form-check-label" for="auto_reboot">
+                                    展開後に自動再起動
+                                </label>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="parallel_mode"
+                                       id="parallel_mode" checked>
+                                <label class="form-check-label" for="parallel_mode">
+                                    並列展開モード（最大20台同時）
+                                </label>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="verify_image"
+                                       id="verify_image">
+                                <label class="form-check-label" for="verify_image">
+                                    展開後にイメージ検証
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label">
+                                <i class="bi bi-chat-left-text me-1"></i>説明（任意）
+                            </label>
+                            <textarea class="form-control" id="description" name="description"
+                                      rows="3" placeholder="展開の目的や注意事項を入力してください"></textarea>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('views.deployment_list') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle me-1"></i>キャンセル
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-play-circle me-1"></i>展開開始
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="col-lg-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-1"></i>展開の流れ
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ol class="small mb-0">
+                        <li class="mb-2">対象PCをPXEブート（LAN起動）します</li>
+                        <li class="mb-2">Clonezillaが自動起動し、イメージ展開を開始</li>
+                        <li class="mb-2">展開完了後、自動再起動（オプション有効時）</li>
+                        <li class="mb-2">Windows初回起動処理が実行されます</li>
+                        <li>セットアップ完了ログが管理画面に送信されます</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-1"></i>注意事項
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li class="mb-2">対象PCの電源をONにする前に展開を開始してください</li>
+                        <li class="mb-2">展開中はネットワークを切断しないでください</li>
+                        <li class="mb-2">並列展開時、1台あたり約20%の性能低下が予想されます</li>
+                        <li>展開時間の目安: 60〜90分/台</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle target selection
+document.querySelectorAll('input[name="target_type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const container = document.getElementById('pcSelectContainer');
+        if (this.value === 'select') {
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+    });
+});
+
+// Update selected count
+document.querySelectorAll('.pc-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateSelectedCount);
+});
+
+function updateSelectedCount() {
+    const count = document.querySelectorAll('.pc-checkbox:checked').length;
+    document.getElementById('selectedCount').textContent = count;
+}
+
+// Form validation
+document.getElementById('deploymentForm').addEventListener('submit', function(e) {
+    const targetType = document.querySelector('input[name="target_type"]:checked').value;
+
+    if (targetType === 'select') {
+        const selectedCount = document.querySelectorAll('.pc-checkbox:checked').length;
+        if (selectedCount === 0) {
+            e.preventDefault();
+            alert('展開対象のPCを1台以上選択してください');
+            return false;
+        }
+    }
+
+    return confirm('展開を開始しますか？\n\n対象PCの電源をONにしてPXEブートしてください。');
+});
+</script>
+{% endblock %}

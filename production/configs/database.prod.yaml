@@ -1,0 +1,118 @@
+# 本番環境用データベース設定ファイル
+
+database:
+  type: sqlite
+  path: /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/data/db/pcsetup.db
+  echo: false
+  pool_size: 20
+  max_overflow: 30
+  pool_recycle: 3600
+  pool_pre_ping: true
+
+  # PostgreSQL設定（オプション）
+  # type: postgresql
+  # host: localhost
+  # port: 5432
+  # database: pcsetup
+  # username: pcsetup_user
+  # password: CHANGE-THIS-PASSWORD
+
+  # テーブル定義
+  tables:
+    pc_master:
+      columns:
+        - name: id
+          type: INTEGER
+          primary_key: true
+          autoincrement: true
+        - name: serial
+          type: TEXT
+          unique: true
+          nullable: false
+          index: true
+        - name: pcname
+          type: TEXT
+          nullable: false
+          index: true
+        - name: odj_path
+          type: TEXT
+          nullable: true
+        - name: created_at
+          type: DATETIME
+          default: CURRENT_TIMESTAMP
+          index: true
+        - name: updated_at
+          type: DATETIME
+          default: CURRENT_TIMESTAMP
+        - name: deployed_at
+          type: DATETIME
+          nullable: true
+        - name: deployment_status
+          type: TEXT
+          nullable: true
+          default: pending
+
+    setup_logs:
+      columns:
+        - name: id
+          type: INTEGER
+          primary_key: true
+          autoincrement: true
+        - name: serial
+          type: TEXT
+          nullable: false
+          index: true
+        - name: pcname
+          type: TEXT
+          nullable: true
+        - name: status
+          type: TEXT
+          nullable: false
+          index: true
+        - name: timestamp
+          type: DATETIME
+          default: CURRENT_TIMESTAMP
+          index: true
+        - name: logs
+          type: TEXT
+          nullable: true
+        - name: error_message
+          type: TEXT
+          nullable: true
+        - name: step
+          type: TEXT
+          nullable: true
+        - name: duration
+          type: INTEGER
+          nullable: true
+
+# バックアップ設定
+backup:
+  enabled: true
+  schedule:
+    daily: "0 2 * * *"
+    weekly: "0 3 * * 0"
+    monthly: "0 4 1 * *"
+  retention:
+    daily: 7
+    weekly: 28
+    monthly: 365
+
+# マイグレーション設定
+migration:
+  enabled: true
+  auto_upgrade: false
+  backup_before_migration: true
+
+# 本番用設定
+production:
+  seed_data: false
+  reset_on_start: false
+  debug_queries: false
+  enable_query_logging: false
+
+# パフォーマンス設定
+performance:
+  connection_timeout: 10
+  command_timeout: 30
+  query_cache_size: 1000

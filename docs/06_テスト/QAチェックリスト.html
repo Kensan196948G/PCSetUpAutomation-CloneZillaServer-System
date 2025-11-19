@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>キッティング展開 QAチェックリスト</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 20px; }
+    h1, h2 { color: #333; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 13px; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+<h1>キッティング展開 QAチェックリスト</h1>
+
+<p>このチェックリストは、新規PCの自動展開（PXE〜ODJ〜後処理）が正常に機能しているかを確認するための項目である。</p>
+
+<h2>1. PXE/Clonezilla関連</h2>
+<table>
+  <thead>
+    <tr>
+      <th>項番</th>
+      <th>カテゴリ</th>
+      <th>チェック項目</th>
+      <th>期待結果</th>
+      <th>結果</th>
+      <th>メモ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>PXE-01</td>
+      <td>PXE</td>
+      <td>対象PCがPXEブートメニューまで自動で到達する</td>
+      <td>DHCPからブート情報が返却され、Clonezillaが起動する</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>PXE-02</td>
+      <td>Clonezilla</td>
+      <td>指定したマスターイメージが正しく選択・展開される</td>
+      <td>エラーなくイメージ書き込みが完了する</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>PXE-03</td>
+      <td>性能</td>
+      <td>10台同時展開時の所要時間を計測する</td>
+      <td>単体展開と比較して、時間増加が20%以内</td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2. Windows初期起動・PC名/ODJ関連</h2>
+<table>
+  <thead>
+    <tr>
+      <th>項番</th>
+      <th>カテゴリ</th>
+      <th>チェック項目</th>
+      <th>期待結果</th>
+      <th>結果</th>
+      <th>メモ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>WIN-01</td>
+      <td>初期起動</td>
+      <td>Windows初回起動時に自動ログオンが行われる</td>
+      <td>ユーザー操作なしでスクリプトが起動する</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>WIN-02</td>
+      <td>Serial取得</td>
+      <td>スクリプトでSerial番号が正しく取得できる</td>
+      <td>箱側のSerialと一致している</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>WIN-03</td>
+      <td>PC名設定</td>
+      <td>PC名が命名規則（YYYYMMDDM）通りに設定される</td>
+      <td>ホスト名が意図したPC名になっている</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>WIN-04</td>
+      <td>ODJ</td>
+      <td>ODJファイル適用後に再起動し、ドメイン参加済みになる</td>
+      <td>AD上でコンピュータアカウントが確認できる</td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>3. 後処理（Windows Update / アプリ導入）</h2>
+<table>
+  <thead>
+    <tr>
+      <th>項番</th>
+      <th>カテゴリ</th>
+      <th>チェック項目</th>
+      <th>期待結果</th>
+      <th>結果</th>
+      <th>メモ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>POST-01</td>
+      <td>Windows Update</td>
+      <td>スクリプトによる更新実行が完了する</td>
+      <td>再起動を含め、保留中の更新が無い状態になる</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>POST-02</td>
+      <td>アプリ</td>
+      <td>会社標準アプリがすべてインストールされている</td>
+      <td>アプリ一覧で必要なアプリが揃っている</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>POST-03</td>
+      <td>OneDrive</td>
+      <td>次回ユーザーログオン時にOneDrive KFMが有効になる</td>
+      <td>ドキュメント・デスクトップがOneDrive配下にリダイレクトされる</td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>4. 管理GUI / ログ関連</h2>
+<table>
+  <thead>
+    <tr>
+      <th>項番</th>
+      <th>カテゴリ</th>
+      <th>チェック項目</th>
+      <th>期待結果</th>
+      <th>結果</th>
+      <th>メモ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GUI-01</td>
+      <td>一覧</td>
+      <td>管理GUIでSerial/PC名/ステータスが一覧表示できる</td>
+      <td>対象PCがcompletedとして表示される</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>GUI-02</td>
+      <td>ログ</td>
+      <td>展開失敗時のエラー内容がログとして確認できる</td>
+      <td>status=failed時に原因メッセージが残っている</td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

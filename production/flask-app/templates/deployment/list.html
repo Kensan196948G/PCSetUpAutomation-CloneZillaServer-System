@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}展開管理 - PC Setup Automation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('views.index') }}">
+                    <i class="bi bi-house-door me-1"></i>ホーム
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-cloud-arrow-down me-1"></i>展開管理
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-cloud-arrow-down me-2"></i>展開管理
+        </h1>
+        <div>
+            <a href="{{ url_for('views.deployment_create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>新規展開作成
+            </a>
+            <a href="{{ url_for('views.deployment_images') }}" class="btn btn-secondary">
+                <i class="bi bi-hdd-stack me-1"></i>イメージ管理
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-clock-history me-2"></i>実行中
+                    </h5>
+                    <p class="card-text h2">{{ stats.running }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-check-circle me-2"></i>完了
+                    </h5>
+                    <p class="card-text h2">{{ stats.completed }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-hourglass-split me-2"></i>待機中
+                    </h5>
+                    <p class="card-text h2">{{ stats.pending }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-exclamation-triangle me-2"></i>失敗
+                    </h5>
+                    <p class="card-text h2">{{ stats.failed }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deployments Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">展開一覧</h5>
+        </div>
+        <div class="card-body">
+            {% if deployments %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>イメージ名</th>
+                            <th>対象PC数</th>
+                            <th>ステータス</th>
+                            <th>進捗</th>
+                            <th>作成日時</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for deployment in deployments %}
+                        <tr>
+                            <td>{{ deployment.id }}</td>
+                            <td>
+                                <i class="bi bi-hdd me-1"></i>
+                                {{ deployment.image_name }}
+                            </td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ deployment.target_count }} 台
+                                </span>
+                            </td>
+                            <td>
+                                {% if deployment.status == 'pending' %}
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-hourglass-split me-1"></i>待機中
+                                </span>
+                                {% elif deployment.status == 'running' %}
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-arrow-repeat me-1"></i>実行中
+                                </span>
+                                {% elif deployment.status == 'completed' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>完了
+                                </span>
+                                {% elif deployment.status == 'failed' %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle me-1"></i>失敗
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="progress" style="min-width: 100px;">
+                                    <div class="progress-bar" role="progressbar"
+                                         style="width: {{ deployment.progress }}%"
+                                         aria-valuenow="{{ deployment.progress }}"
+                                         aria-valuemin="0" aria-valuemax="100">
+                                        {{ deployment.progress }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ deployment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('views.deployment_detail', deployment_id=deployment.id) }}"
+                                   class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye me-1"></i>詳細
+                                </a>
+                                {% if deployment.status in ['pending', 'running'] %}
+                                <form method="POST"
+                                      action="{{ url_for('api.deployment.cancel_deployment', deployment_id=deployment.id) }}"
+                                      class="d-inline"
+                                      onsubmit="return confirm('この展開をキャンセルしますか？');">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-x-circle me-1"></i>キャンセル
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                展開がありません。新規展開を作成してください。
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh every 30 seconds if there are running deployments
+{% if stats.running > 0 %}
+setTimeout(function() {
+    location.reload();
+}, 30000);
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,120 @@
+================================================================================
+Clonezillaイメージパス設定機能 - ファイルサマリー
+================================================================================
+
+実装日時: 2025-11-17 13:23
+ステータス: 実装完了・動作確認済み
+
+================================================================================
+新規作成ファイル (6件)
+================================================================================
+
+1. API実装
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app/api/settings.py
+   サイズ: 6.6KB
+   内容: Settings API (3エンドポイント + ヘルパー関数)
+
+2. 開発環境設定
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app/.env
+   サイズ: 875B
+   内容: 環境変数設定 (CLONEZILLA_IMAGE_PATH等)
+
+3. テストスクリプト
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app/test_settings_api.py
+   サイズ: 4.5KB
+   内容: API自動テスト (5テストケース)
+
+4. 実装ドキュメント
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app/SETTINGS_API_IMPLEMENTATION.md
+   サイズ: 11KB
+   内容: 完全な実装仕様・詳細
+
+5. クイックリファレンス
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app/SETTINGS_QUICK_REFERENCE.md
+   サイズ: 3.5KB
+   内容: 使い方・トラブルシューティング
+
+6. チェックリスト
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app/IMPLEMENTATION_CHECKLIST.md
+   サイズ: 7.5KB
+   内容: 実装確認項目・検証手順
+
+7. 完了レポート
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app/IMPLEMENTATION_COMPLETE.md
+   サイズ: 4.5KB
+   内容: 実装完了報告・成果物
+
+================================================================================
+更新ファイル (5件)
+================================================================================
+
+1. API Blueprint
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app/api/__init__.py
+   変更: settings import追加 (1行)
+
+2. 設定ファイル
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app/config.py
+   変更: .env読み込み改善 (4行)
+
+3. デプロイメントビュー
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app/views/deployment.py
+   変更: current_app import + config渡し (2行)
+
+4. 設定画面テンプレート
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app/templates/deployment/settings.html
+   変更: UI追加 (45行) + JavaScript追加 (120行)
+
+5. 本番環境設定
+   /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/.env.production
+   変更: CLONEZILLA_IMAGE_PATH追加 (1行)
+
+================================================================================
+APIエンドポイント
+================================================================================
+
+GET    /api/settings                          # 設定取得
+POST   /api/settings/image-path               # パス更新
+POST   /api/settings/image-path/validate      # パス検証
+
+================================================================================
+Web UIルート
+================================================================================
+
+GET    /deployment/settings                   # 設定画面
+GET    /deploy-settings                       # 設定画面（別名）
+
+================================================================================
+クイックスタート
+================================================================================
+
+1. Flaskサーバー起動:
+   cd /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app
+   source venv/bin/activate
+   python app.py
+
+2. Web UIアクセス:
+   http://localhost:5000/deployment/settings
+
+3. APIテスト:
+   source venv/bin/activate
+   python test_settings_api.py
+
+================================================================================
+デフォルト設定
+================================================================================
+
+CLONEZILLA_IMAGE_PATH: /mnt/Linux-ExHDD/Ubuntu-ExHDD
+ODJ_FILES_PATH:        /srv/odj/
+API_HOST:              0.0.0.0
+API_PORT:              5000
+
+================================================================================
+ドキュメント読む順序
+================================================================================
+
+1. IMPLEMENTATION_COMPLETE.md    # まず最初に読む（概要）
+2. SETTINGS_QUICK_REFERENCE.md   # 使い方を知る
+3. SETTINGS_API_IMPLEMENTATION.md # 詳細を理解する
+4. IMPLEMENTATION_CHECKLIST.md   # 確認・検証する
+
+================================================================================

@@ -1,0 +1,103 @@
+# 開発環境用API設定ファイル
+
+api:
+  version: v1
+  prefix: /api
+  title: "PCキッティング自動化API（開発環境）"
+  description: "会社キッティング自動化フレームワークのREST API"
+
+  # エンドポイント設定
+  endpoints:
+    pcinfo:
+      path: /pcinfo
+      methods: [GET]
+      description: "PC情報取得（Serial番号からPC名とODJパスを返却）"
+      parameters:
+        - name: serial
+          type: string
+          required: true
+          description: "PCのSerial番号"
+      response_format: json
+      timeout: 5
+
+    log:
+      path: /log
+      methods: [POST]
+      description: "セットアップログ登録"
+      body_format: json
+      required_fields:
+        - serial
+        - pcname
+        - status
+        - timestamp
+      optional_fields:
+        - logs
+        - error_message
+        - step
+      timeout: 10
+
+    health:
+      path: /health
+      methods: [GET]
+      description: "ヘルスチェック"
+      response_format: json
+      timeout: 2
+
+    admin:
+      path: /admin
+      methods: [GET, POST, PUT, DELETE]
+      description: "管理画面API"
+      authentication: false  # 開発環境では無効
+      timeout: 30
+
+  # レート制限（開発環境では緩い設定）
+  rate_limiting:
+    enabled: false
+    requests_per_minute: 1000
+    requests_per_hour: 10000
+
+  # CORS設定
+  cors:
+    enabled: true
+    origins:
+      - http://localhost:3000
+      - http://localhost:5000
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+    headers:
+      - Content-Type
+      - Authorization
+      - X-Requested-With
+
+  # 認証設定（開発環境では無効）
+  authentication:
+    enabled: false
+    type: none
+
+  # ロギング設定
+  logging:
+    enabled: true
+    level: DEBUG
+    log_requests: true
+    log_responses: true
+    log_body: true
+    log_headers: true
+
+  # エラーハンドリング
+  error_handling:
+    include_traceback: true
+    verbose_errors: true
+
+  # タイムアウト設定
+  timeout:
+    default: 30
+    max: 300
+
+  # キャッシュ設定
+  cache:
+    enabled: false
+    ttl: 60

@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}CSV一括登録 - PC Setup Automation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="bi bi-file-earmark-spreadsheet me-2"></i>CSV一括登録
+            </h2>
+        </div>
+    </div>
+
+    <!-- CSV Format Example -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <i class="bi bi-info-circle me-2"></i>CSVファイル形式
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">以下の形式でCSVファイルを作成してください：</p>
+                    <div class="bg-light p-3 rounded">
+                        <code>serial,pcname,odj_path</code><br>
+                        <code>ABC001,20251116M,/srv/odj/20251116M.txt</code><br>
+                        <code>ABC002,20251117M,/srv/odj/20251117M.txt</code><br>
+                        <code>ABC003,20251118M,</code>
+                    </div>
+                    <div class="mt-3">
+                        <strong>必須列：</strong>
+                        <ul class="mb-0">
+                            <li><code>serial</code>: PCのシリアル番号（重複不可）</li>
+                            <li><code>pcname</code>: PC名（YYYYMMDDM形式）</li>
+                            <li><code>odj_path</code>: ODJファイルパス（省略可）</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Area -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-upload me-2"></i>ファイルアップロード
+                </div>
+                <div class="card-body">
+                    <!-- Drag & Drop Zone -->
+                    <div id="dropZone" class="border border-2 border-dashed rounded p-5 text-center mb-3"
+                         style="background-color: #f8f9fa; cursor: pointer; transition: all 0.3s;">
+                        <i class="bi bi-cloud-upload fs-1 text-muted mb-3 d-block"></i>
+                        <h5 class="text-muted">ここにCSVファイルをドラッグ&ドロップ</h5>
+                        <p class="text-muted mb-3">または</p>
+                        <input type="file" id="csvFileInput" accept=".csv" class="d-none">
+                        <button type="button" class="btn btn-primary" onclick="document.getElementById('csvFileInput').click()">
+                            <i class="bi bi-folder2-open me-2"></i>ファイルを選択
+                        </button>
+                        <p class="text-muted mt-3 mb-0"><small>CSVファイル (.csv) のみ対応</small></p>
+                    </div>
+
+                    <!-- Selected File Info -->
+                    <div id="fileInfo" class="d-none">
+                        <div class="alert alert-success">
+                            <i class="bi bi-file-earmark-check me-2"></i>
+                            選択されたファイル: <strong id="fileName"></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Area -->
+    <div id="previewArea" class="row mb-4 d-none">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi bi-eye me-2"></i>プレビュー
+                    </span>
+                    <span class="badge bg-light text-dark">
+                        合計: <span id="totalRows">0</span> 行
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        最初の10行を表示しています
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="previewTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Serial</th>
+                                    <th>PC Name</th>
+                                    <th>ODJ Path</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewBody">
+                                <!-- Preview rows will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Button -->
+    <div id="importButtonArea" class="row mb-4 d-none">
+        <div class="col-12 text-center">
+            <button type="button" id="importBtn" class="btn btn-success btn-lg px-5">
+                <i class="bi bi-database-add me-2"></i>データベースに登録する
+            </button>
+            <button type="button" id="cancelBtn" class="btn btn-secondary btn-lg px-5 ms-3">
+                <i class="bi bi-x-circle me-2"></i>キャンセル
+            </button>
+        </div>
+    </div>
+
+    <!-- Results Area -->
+    <div id="resultsArea" class="row mb-4 d-none">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <i class="bi bi-check-circle me-2"></i>登録結果
+                </div>
+                <div class="card-body">
+                    <div id="successAlert" class="alert alert-success d-none">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <strong id="successCount">0</strong> 件のデータを登録しました
+                    </div>
+                    <div id="errorAlert" class="alert alert-warning d-none">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong id="errorCount">0</strong> 件のエラーがありました
+                    </div>
+                    <div id="errorList" class="d-none">
+                        <h6>エラー詳細：</h6>
+                        <ul id="errorDetails" class="mb-0">
+                            <!-- Error items will be inserted here -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let uploadedData = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('csvFileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const previewArea = document.getElementById('previewArea');
+    const importButtonArea = document.getElementById('importButtonArea');
+    const importBtn = document.getElementById('importBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const resultsArea = document.getElementById('resultsArea');
+
+    // Drag & Drop handlers
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.backgroundColor = '#e3f2fd';
+        this.style.borderColor = '#2196F3';
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.backgroundColor = '#f8f9fa';
+        this.style.borderColor = '#dee2e6';
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.backgroundColor = '#f8f9fa';
+        this.style.borderColor = '#dee2e6';
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+
+    dropZone.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            handleFile(this.files[0]);
+        }
+    });
+
+    importBtn.addEventListener('click', executeImport);
+    cancelBtn.addEventListener('click', resetForm);
+
+    function handleFile(file) {
+        if (!file.name.endsWith('.csv')) {
+            alert('CSVファイルを選択してください');
+            return;
+        }
+
+        fileName.textContent = file.name;
+        fileInfo.classList.remove('d-none');
+
+        // Upload file to server
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Show loading
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loading';
+        loadingDiv.className = 'alert alert-info';
+        loadingDiv.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>ファイルを解析中...';
+        fileInfo.appendChild(loadingDiv);
+
+        fetch('{{ url_for("views.import_upload") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading').remove();
+
+            if (data.error) {
+                alert('エラー: ' + data.error);
+                return;
+            }
+
+            uploadedData = data;
+            displayPreview(data);
+        })
+        .catch(error => {
+            document.getElementById('loading').remove();
+            console.error('Error:', error);
+            alert('ファイルのアップロードに失敗しました');
+        });
+    }
+
+    function displayPreview(data) {
+        const previewBody = document.getElementById('previewBody');
+        previewBody.innerHTML = '';
+
+        data.preview.forEach((row, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td><code>${row.serial || ''}</code></td>
+                <td><strong>${row.pcname || ''}</strong></td>
+                <td><small class="text-muted">${row.odj_path || '(未設定)'}</small></td>
+            `;
+            previewBody.appendChild(tr);
+        });
+
+        document.getElementById('totalRows').textContent = data.total_rows;
+        previewArea.classList.remove('d-none');
+        importButtonArea.classList.remove('d-none');
+        resultsArea.classList.add('d-none');
+    }
+
+    function executeImport() {
+        if (!uploadedData || !uploadedData.data) {
+            alert('インポートするデータがありません');
+            return;
+        }
+
+        if (!confirm(`${uploadedData.total_rows} 件のデータをインポートします。よろしいですか？`)) {
+            return;
+        }
+
+        importBtn.disabled = true;
+        importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>登録中...';
+
+        fetch('{{ url_for("views.import_execute") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                rows: uploadedData.data
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            importBtn.disabled = false;
+            importBtn.innerHTML = '<i class="bi bi-database-add me-2"></i>データベースに登録する';
+
+            if (data.error) {
+                alert('エラー: ' + data.error);
+                return;
+            }
+
+            displayResults(data);
+        })
+        .catch(error => {
+            importBtn.disabled = false;
+            importBtn.innerHTML = '<i class="bi bi-database-add me-2"></i>データベースに登録する';
+            console.error('Error:', error);
+            alert('インポート処理に失敗しました');
+        });
+    }
+
+    function displayResults(data) {
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorList = document.getElementById('errorList');
+        const errorDetails = document.getElementById('errorDetails');
+
+        document.getElementById('successCount').textContent = data.success_count;
+        successAlert.classList.remove('d-none');
+
+        if (data.error_count > 0) {
+            document.getElementById('errorCount').textContent = data.error_count;
+            errorAlert.classList.remove('d-none');
+
+            errorDetails.innerHTML = '';
+            data.errors.forEach(error => {
+                const li = document.createElement('li');
+                li.textContent = error;
+                errorDetails.appendChild(li);
+            });
+            errorList.classList.remove('d-none');
+        } else {
+            errorAlert.classList.add('d-none');
+            errorList.classList.add('d-none');
+        }
+
+        resultsArea.classList.remove('d-none');
+        importButtonArea.classList.add('d-none');
+
+        // Auto-scroll to results
+        resultsArea.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function resetForm() {
+        fileInput.value = '';
+        fileInfo.classList.add('d-none');
+        previewArea.classList.add('d-none');
+        importButtonArea.classList.add('d-none');
+        resultsArea.classList.add('d-none');
+        uploadedData = null;
+    }
+});
+</script>
+{% endblock %}

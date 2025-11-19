@@ -1,0 +1,134 @@
+# 本番環境用API設定ファイル
+
+api:
+  version: v1
+  prefix: /api
+  title: "PCキッティング自動化API"
+  description: "会社キッティング自動化フレームワークのREST API"
+
+  # エンドポイント設定
+  endpoints:
+    pcinfo:
+      path: /pcinfo
+      methods: [GET]
+      description: "PC情報取得（Serial番号からPC名とODJパスを返却）"
+      parameters:
+        - name: serial
+          type: string
+          required: true
+          description: "PCのSerial番号"
+      response_format: json
+      timeout: 5
+      cache_ttl: 300
+
+    log:
+      path: /log
+      methods: [POST]
+      description: "セットアップログ登録"
+      body_format: json
+      required_fields:
+        - serial
+        - pcname
+        - status
+        - timestamp
+      optional_fields:
+        - logs
+        - error_message
+        - step
+        - duration
+      timeout: 10
+
+    health:
+      path: /health
+      methods: [GET]
+      description: "ヘルスチェック"
+      response_format: json
+      timeout: 2
+      public: true
+
+    admin:
+      path: /admin
+      methods: [GET, POST, PUT, DELETE]
+      description: "管理画面API"
+      authentication: true  # 本番環境では有効
+      timeout: 30
+
+  # レート制限（本番環境では厳格な設定）
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 60
+    requests_per_hour: 1000
+    burst: 10
+    by: ip_address
+
+  # CORS設定（本番環境では無効）
+  cors:
+    enabled: false
+    origins: []
+    methods: []
+    headers: []
+
+  # 認証設定（本番環境）
+  authentication:
+    enabled: true
+    type: api_key
+    header: X-API-Key
+    validate_ip: true
+    allowed_ips:
+      - 192.168.1.0/24  # 社内LANのみ許可
+    session_timeout: 3600
+
+  # ロギング設定
+  logging:
+    enabled: true
+    level: INFO
+    log_requests: true
+    log_responses: false
+    log_body: false
+    log_headers: false
+    sensitive_fields:
+      - password
+      - api_key
+      - secret
+
+  # エラーハンドリング
+  error_handling:
+    include_traceback: false
+    verbose_errors: false
+    custom_error_messages: true
+
+  # タイムアウト設定
+  timeout:
+    default: 30
+    max: 300
+    connect: 10
+    read: 30
+
+  # キャッシュ設定
+  cache:
+    enabled: true
+    ttl: 300
+    max_size: 1000
+    backend: memory
+
+  # パフォーマンス設定
+  performance:
+    max_content_length: 16777216  # 16MB
+    json_sort_keys: false
+    compress_response: true
+    compression_level: 6
+
+  # セキュリティ設定
+  security:
+    enable_ssl: true
+    ssl_verify: true
+    enable_hsts: true
+    enable_csp: true
+    enable_xss_protection: true
+    enable_frame_options: true
+
+  # 監視設定
+  monitoring:
+    enabled: true
+    metrics_endpoint: /metrics
+    metrics_authentication: true

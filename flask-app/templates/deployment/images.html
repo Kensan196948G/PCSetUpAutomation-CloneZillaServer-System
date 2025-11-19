@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}マスターイメージ管理 - PC Setup Automation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('views.index') }}">
+                    <i class="bi bi-house-door me-1"></i>ホーム
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('views.deployment_list') }}">
+                    <i class="bi bi-cloud-arrow-down me-1"></i>展開管理
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-images me-1"></i>マスターイメージ管理
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="bi bi-images me-2"></i>マスターイメージ管理
+                    </h2>
+                    <small class="text-muted">Clonezillaマスターイメージの一覧・管理</small>
+                </div>
+                <div>
+                    <a href="{{ url_for('views.deployment') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>新規展開
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Images Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {% if images %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 25%;">
+                                            <i class="bi bi-image me-1"></i>イメージ名
+                                        </th>
+                                        <th style="width: 20%;">
+                                            <i class="bi bi-folder me-1"></i>パス
+                                        </th>
+                                        <th style="width: 12%;">
+                                            <i class="bi bi-hdd me-1"></i>サイズ
+                                        </th>
+                                        <th style="width: 15%;">
+                                            <i class="bi bi-calendar me-1"></i>作成日時
+                                        </th>
+                                        <th style="width: 12%;">
+                                            <i class="bi bi-status me-1"></i>状態
+                                        </th>
+                                        <th style="width: 16%;">
+                                            <i class="bi bi-gear me-1"></i>操作
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for image in images %}
+                                    <tr>
+                                        <td>
+                                            <strong class="text-dark">{{ image.name }}</strong>
+                                            {% if image.description %}
+                                                <br>
+                                                <small class="text-muted">{{ image.description }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <code class="text-break">{{ image.path }}</code>
+                                        </td>
+                                        <td>
+                                            {% if image.size %}
+                                                <span>{{ image.size }}</span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if image.created_date %}
+                                                {{ image.created_date }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if image.is_active %}
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-check-circle me-1"></i>デフォルト
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-circle me-1"></i>非アクティブ
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{{ '#' }}"
+                                                   class="btn btn-outline-primary"
+                                                   title="詳細情報を表示">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                {% if not image.is_active %}
+                                                    <form method="POST"
+                                                          action="{{ '#' }}"
+                                                          class="d-inline"
+                                                          onsubmit="return confirm('このイメージをデフォルトに設定しますか？');">
+                                                        <button type="submit"
+                                                                class="btn btn-outline-success"
+                                                                title="デフォルトイメージに設定">
+                                                            <i class="bi bi-star"></i>
+                                                        </button>
+                                                    </form>
+                                                {% else %}
+                                                    <button class="btn btn-outline-success" disabled
+                                                            title="現在のデフォルトイメージです">
+                                                        <i class="bi bi-star-fill"></i>
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Summary Footer -->
+                        <div class="row mt-3 pt-3 border-top">
+                            <div class="col-12">
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    合計 <strong>{{ images | length }}</strong> 件のイメージが登録されています
+                                    {% set active_count = images | selectattr('is_active') | list | length %}
+                                    (デフォルト: <strong>{{ active_count }}</strong> 件)
+                                </small>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Empty State -->
+                        <div class="alert alert-info mb-0" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-info-circle me-3" style="font-size: 24px;"></i>
+                                <div>
+                                    <strong>マスターイメージが登録されていません</strong>
+                                    <p class="mb-0 mt-2">
+                                        新規展開を作成するには、まずマスターイメージが必要です。
+                                        DRBLサーバの <code>/home/partimag/</code> ディレクトリを確認してください。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Information Card -->
+    <div class="row mt-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-question-circle me-2"></i>マスターイメージについて
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>マスターイメージ</strong>は、Clonezillaで作成されたWindows PCのマスター構成イメージです。
+                    </p>
+                    <ul class="mb-0">
+                        <li>イメージファイルは <code>/home/partimag/</code> に保存されます</li>
+                        <li>デフォルトイメージは新規展開時に自動で選択されます</li>
+                        <li>複数のイメージを管理することで、異なる構成の展開が可能です</li>
+                        <li>イメージのサイズは圧縮形式（zstd/gzip）に依存します</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm bg-light">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning-charge me-2"></i>クイック操作
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('views.deployment') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i>新規展開を作成
+                        </a>
+                        <a href="{{ url_for('views.deployment_list') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-list-ul me-1"></i>展開一覧へ戻る
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tooltip initialization -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

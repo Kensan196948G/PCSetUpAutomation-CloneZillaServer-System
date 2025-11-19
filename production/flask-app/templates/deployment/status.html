@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}展開ステータス{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('views.index') }}">ホーム</a></li>
+            <li class="breadcrumb-item active" aria-current="page">展開ステータス</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">展開ステータス</h1>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-sm btn-outline-primary" id="refreshBtn" title="手動リフレッシュ">
+                <i class="fas fa-sync-alt"></i> リフレッシュ
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="autoRefreshToggle" title="自動リフレッシュ">
+                <i class="fas fa-clock"></i> <span id="autoRefreshText">自動更新: ON</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Overall Progress Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">全体進捗</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>完了度</span>
+                    <span class="badge bg-primary" id="overallPercentage">{{ overall_progress }}%</span>
+                </div>
+                <div class="progress" style="height: 30px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ overall_progress }}%"
+                         aria-valuenow="{{ overall_progress }}" aria-valuemin="0" aria-valuemax="100" id="overallProgressBar">
+                        {{ overall_progress }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-muted text-uppercase mb-3">全体展開台数</h6>
+                    <div class="display-6 fw-bold" id="totalDeploysCard">{{ total_deploys }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card h-100 border-success">
+                <div class="card-body">
+                    <h6 class="card-title text-muted text-uppercase mb-3">完了</h6>
+                    <div class="display-6 fw-bold text-success" id="completedCard">{{ completed_count }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card h-100 border-warning">
+                <div class="card-body">
+                    <h6 class="card-title text-muted text-uppercase mb-3">進行中</h6>
+                    <div class="display-6 fw-bold text-warning" id="inProgressCard">{{ in_progress_count }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card h-100 border-danger">
+                <div class="card-body">
+                    <h6 class="card-title text-muted text-uppercase mb-3">失敗</h6>
+                    <div class="display-6 fw-bold text-danger" id="failedCard">{{ failed_count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deployment Items Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">展開詳細</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if deploy_items %}
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 15%;">PC名</th>
+                            <th style="width: 15%;">シリアル番号</th>
+                            <th style="width: 10%;">状態</th>
+                            <th style="width: 35%;">進捗</th>
+                            <th style="width: 25%;">タイムスタンプ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deploymentTableBody">
+                        {% for item in deploy_items %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.pcname }}</strong>
+                            </td>
+                            <td>
+                                <code>{{ item.serial }}</code>
+                            </td>
+                            <td>
+                                {% if item.status == 'completed' %}
+                                    <span class="badge bg-success">完了</span>
+                                {% elif item.status == 'in_progress' %}
+                                    <span class="badge bg-warning text-dark">進行中</span>
+                                {% elif item.status == 'failed' %}
+                                    <span class="badge bg-danger">失敗</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">待機中</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 24px;">
+                                    {% if item.status == 'completed' %}
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%"
+                                             aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                                            100%
+                                        </div>
+                                    {% elif item.status == 'failed' %}
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: {{ item.progress }}%"
+                                             aria-valuenow="{{ item.progress }}" aria-valuemin="0" aria-valuemax="100">
+                                            {{ item.progress }}%
+                                        </div>
+                                    {% else %}
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ item.progress }}%"
+                                             aria-valuenow="{{ item.progress }}" aria-valuemin="0" aria-valuemax="100">
+                                            {{ item.progress }}%
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ item.timestamp }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info m-3 mb-0">
+                <i class="fas fa-info-circle"></i> 展開データはまだありません。
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- Auto-refresh Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let autoRefreshEnabled = true;
+    let refreshInterval = null;
+    const REFRESH_INTERVAL = 5000; // 5 seconds
+
+    const refreshBtn = document.getElementById('refreshBtn');
+    const autoRefreshToggle = document.getElementById('autoRefreshToggle');
+
+    // Manual refresh function
+    function refreshStatus() {
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(html, 'text/html');
+
+                // Update overall progress
+                const newOverallProgress = newDoc.getElementById('overallPercentage');
+                const newProgressBar = newDoc.querySelector('#overallProgressBar');
+                if (newOverallProgress && newProgressBar) {
+                    const newValue = newOverallProgress.textContent.replace('%', '');
+                    document.getElementById('overallPercentage').textContent = newValue + '%';
+                    document.getElementById('overallProgressBar').style.width = newValue + '%';
+                    document.getElementById('overallProgressBar').textContent = newValue + '%';
+                }
+
+                // Update statistics cards
+                const cards = ['totalDeploysCard', 'completedCard', 'inProgressCard', 'failedCard'];
+                cards.forEach(cardId => {
+                    const newCard = newDoc.getElementById(cardId);
+                    const oldCard = document.getElementById(cardId);
+                    if (newCard && oldCard) {
+                        oldCard.textContent = newCard.textContent;
+                    }
+                });
+
+                // Update table
+                const newTableBody = newDoc.getElementById('deploymentTableBody');
+                const oldTableBody = document.getElementById('deploymentTableBody');
+                if (newTableBody && oldTableBody) {
+                    oldTableBody.innerHTML = newTableBody.innerHTML;
+                } else {
+                    const newAlert = newDoc.querySelector('.alert-info');
+                    if (newAlert) {
+                        const cardBody = document.querySelector('.card-body');
+                        if (cardBody && cardBody.querySelector('table')) {
+                            cardBody.innerHTML = newAlert.outerHTML;
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Refresh error:', error));
+    }
+
+    // Manual refresh button
+    refreshBtn.addEventListener('click', refreshStatus);
+
+    // Auto-refresh toggle
+    autoRefreshToggle.addEventListener('click', function() {
+        autoRefreshEnabled = !autoRefreshEnabled;
+
+        const textSpan = document.getElementById('autoRefreshText');
+        if (autoRefreshEnabled) {
+            autoRefreshToggle.classList.remove('btn-outline-secondary');
+            autoRefreshToggle.classList.add('btn-outline-primary');
+            textSpan.textContent = '自動更新: ON';
+
+            // Start auto-refresh
+            refreshInterval = setInterval(refreshStatus, REFRESH_INTERVAL);
+        } else {
+            autoRefreshToggle.classList.remove('btn-outline-primary');
+            autoRefreshToggle.classList.add('btn-outline-secondary');
+            textSpan.textContent = '自動更新: OFF';
+
+            // Stop auto-refresh
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+        }
+    });
+
+    // Start auto-refresh on page load
+    refreshInterval = setInterval(refreshStatus, REFRESH_INTERVAL);
+});
+</script>
+
+{% endblock %}

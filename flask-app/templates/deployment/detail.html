@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}展開詳細 - PC Setup Automation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('views.index') }}">
+                    <i class="bi bi-house-door me-1"></i>ホーム
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('views.deployment_list') }}">
+                    <i class="bi bi-cloud-arrow-down me-1"></i>展開管理
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                展開詳細 #{{ deployment.id }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-info-circle me-2"></i>展開詳細 #{{ deployment.id }}
+        </h1>
+        <div>
+            {% if deployment.status in ['pending', 'running'] %}
+            <button class="btn btn-warning" onclick="pauseDeployment()">
+                <i class="bi bi-pause-circle me-1"></i>一時停止
+            </button>
+            <button class="btn btn-danger" onclick="cancelDeployment()">
+                <i class="bi bi-x-circle me-1"></i>キャンセル
+            </button>
+            {% endif %}
+            <a href="{{ url_for('views.deployment_list') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i>一覧に戻る
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Overview -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">展開情報</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>イメージ名:</strong><br>
+                            <i class="bi bi-hdd me-1"></i>{{ deployment.image_name }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>ステータス:</strong><br>
+                            {% if deployment.status == 'pending' %}
+                            <span class="badge bg-warning">
+                                <i class="bi bi-hourglass-split me-1"></i>待機中
+                            </span>
+                            {% elif deployment.status == 'running' %}
+                            <span class="badge bg-primary">
+                                <i class="bi bi-arrow-repeat me-1"></i>実行中
+                            </span>
+                            {% elif deployment.status == 'completed' %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle me-1"></i>完了
+                            </span>
+                            {% elif deployment.status == 'failed' %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-x-circle me-1"></i>失敗
+                            </span>
+                            {% elif deployment.status == 'cancelled' %}
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-dash-circle me-1"></i>キャンセル済
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>対象PC数:</strong><br>
+                            {{ deployment.target_count }} 台
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>作成日時:</strong><br>
+                            {{ deployment.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </div>
+                        {% if deployment.started_at %}
+                        <div class="col-md-6 mb-3">
+                            <strong>開始日時:</strong><br>
+                            {{ deployment.started_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </div>
+                        {% endif %}
+                        {% if deployment.completed_at %}
+                        <div class="col-md-6 mb-3">
+                            <strong>完了日時:</strong><br>
+                            {{ deployment.completed_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </div>
+                        {% endif %}
+                        {% if deployment.description %}
+                        <div class="col-12">
+                            <strong>説明:</strong><br>
+                            {{ deployment.description }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">進捗状況</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <svg width="120" height="120">
+                            <circle cx="60" cy="60" r="50" stroke="#e9ecef" stroke-width="10" fill="none"/>
+                            <circle cx="60" cy="60" r="50" stroke="#0d6efd" stroke-width="10" fill="none"
+                                    stroke-dasharray="{{ deployment.progress * 3.14 }} 314"
+                                    transform="rotate(-90 60 60)"/>
+                            <text x="60" y="65" text-anchor="middle" font-size="24" font-weight="bold">
+                                {{ deployment.progress }}%
+                            </text>
+                        </svg>
+                    </div>
+                    <p class="mb-0">
+                        <strong>{{ deployment.completed_count }}/{{ deployment.target_count }}</strong> 台完了
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Target PCs Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">対象PC一覧</h5>
+            <div>
+                <button class="btn btn-sm btn-outline-primary" onclick="refreshStatus()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>更新
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>PC名</th>
+                            <th>Serial番号</th>
+                            <th>ステータス</th>
+                            <th>進捗</th>
+                            <th>開始時刻</th>
+                            <th>完了時刻</th>
+                            <th>エラー</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for target in deployment.targets %}
+                        <tr>
+                            <td>
+                                <i class="bi bi-pc-display me-1"></i>
+                                {{ target.pcname }}
+                            </td>
+                            <td>{{ target.serial }}</td>
+                            <td>
+                                {% if target.status == 'pending' %}
+                                <span class="badge bg-secondary">待機中</span>
+                                {% elif target.status == 'running' %}
+                                <span class="badge bg-primary">実行中</span>
+                                {% elif target.status == 'completed' %}
+                                <span class="badge bg-success">完了</span>
+                                {% elif target.status == 'failed' %}
+                                <span class="badge bg-danger">失敗</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="progress" style="min-width: 100px;">
+                                    <div class="progress-bar" role="progressbar"
+                                         style="width: {{ target.progress }}%"
+                                         aria-valuenow="{{ target.progress }}"
+                                         aria-valuemin="0" aria-valuemax="100">
+                                        {{ target.progress }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if target.started_at %}
+                                {{ target.started_at.strftime('%H:%M:%S') }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if target.completed_at %}
+                                {{ target.completed_at.strftime('%H:%M:%S') }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if target.error_message %}
+                                <button class="btn btn-sm btn-outline-danger"
+                                        onclick="showError('{{ target.error_message }}')">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </button>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">エラー詳細</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="errorMessage"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function refreshStatus() {
+    location.reload();
+}
+
+function pauseDeployment() {
+    if (confirm('展開を一時停止しますか？')) {
+        fetch('/api/deployments/{{ deployment.id }}/pause', {
+            method: 'POST'
+        }).then(() => location.reload());
+    }
+}
+
+function cancelDeployment() {
+    if (confirm('展開をキャンセルしますか？\n\nこの操作は取り消せません。')) {
+        fetch('/api/deployments/{{ deployment.id }}/cancel', {
+            method: 'POST'
+        }).then(() => location.reload());
+    }
+}
+
+function showError(message) {
+    document.getElementById('errorMessage').textContent = message;
+    new bootstrap.Modal(document.getElementById('errorModal')).show();
+}
+
+// Auto-refresh every 10 seconds if deployment is running
+{% if deployment.status == 'running' %}
+setTimeout(function() {
+    location.reload();
+}, 10000);
+{% endif %}
+</script>
+{% endblock %}

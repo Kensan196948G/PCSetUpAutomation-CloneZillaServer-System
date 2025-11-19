@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}マスターイメージ管理 - PC Setup Automation{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('views.index') }}">ダッシュボード</a></li>
+                <li class="breadcrumb-item active" aria-current="page">マスターイメージ管理</li>
+            </ol>
+        </nav>
+        <h1 class="display-5 fw-bold">
+            <i class="bi bi-disc text-primary"></i>
+            マスターイメージ管理
+        </h1>
+        <p class="lead text-muted">Clonezillaマスターイメージの管理と展開設定</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Image List -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-hdd-stack text-info"></i>
+                        登録済みイメージ
+                    </h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addImageModal">
+                        <i class="bi bi-plus-circle me-2"></i>新規イメージ登録
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if images %}
+                    <div class="list-group list-group-flush">
+                        {% for image in images %}
+                        <div class="list-group-item px-0">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary bg-opacity-10 rounded p-3 me-3">
+                                            <i class="bi bi-disc fs-3 text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1 fw-bold">{{ image.name }}</h5>
+                                            <p class="mb-1 text-muted">{{ image.description }}</p>
+                                            <small class="text-muted">
+                                                <i class="bi bi-folder me-1"></i>{{ image.path }}<br>
+                                                <i class="bi bi-hdd me-1"></i>サイズ: {{ image.size }}<br>
+                                                <i class="bi bi-calendar-event me-1"></i>作成日: {{ image.created_date }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                    {% if image.is_active %}
+                                        <span class="badge bg-success mb-2">
+                                            <i class="bi bi-check-circle me-1"></i>アクティブ
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary mb-2">無効</span>
+                                    {% endif %}
+                                    <br>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" title="編集">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" title="展開">
+                                            <i class="bi bi-play-circle"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="削除">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-disc fs-1 text-muted"></i>
+                        <p class="text-muted mt-3">マスターイメージが登録されていません</p>
+                        <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addImageModal">
+                            <i class="bi bi-plus-circle me-2"></i>最初のイメージを登録
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- DRBL Server Info -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-server"></i>
+                    DRBLサーバー情報
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3">
+                        <strong>サーバーステータス:</strong><br>
+                        <span class="badge bg-success">
+                            <i class="bi bi-circle-fill me-1"></i>稼働中
+                        </span>
+                    </li>
+                    <li class="mb-3">
+                        <strong>イメージ格納先:</strong><br>
+                        <code>/home/partimag/</code>
+                    </li>
+                    <li class="mb-3">
+                        <strong>ディスク使用量:</strong><br>
+                        <div class="progress mt-1" style="height: 20px;">
+                            <div class="progress-bar" style="width: 65%">65%</div>
+                        </div>
+                    </li>
+                    <li class="mb-0">
+                        <strong>同時展開可能台数:</strong><br>
+                        10〜20台
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Guide -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-book text-info"></i>
+                    クイックガイド
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold">マスターイメージ作成手順:</h6>
+                <ol class="small">
+                    <li>マスターPCをセットアップ</li>
+                    <li>Sysprep実行</li>
+                    <li>Clonezillaでイメージ化</li>
+                    <li>DRBLサーバーに保存</li>
+                    <li>当システムに登録</li>
+                </ol>
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <small>Sysprep実行前にAppX除外処理が必要です</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Image Modal -->
+<div class="modal fade" id="addImageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>新規マスターイメージ登録
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addImageForm">
+                    <div class="mb-3">
+                        <label for="imageName" class="form-label fw-bold">イメージ名</label>
+                        <input type="text" class="form-control" id="imageName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="imagePath" class="form-label fw-bold">イメージパス</label>
+                        <input type="text" class="form-control" id="imagePath" placeholder="/home/partimag/master-2025" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="imageDescription" class="form-label fw-bold">説明</label>
+                        <textarea class="form-control" id="imageDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="setActive">
+                        <label class="form-check-label" for="setActive">
+                            アクティブイメージとして設定
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="bi bi-save me-2"></i>登録
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Mock data for demonstration
+const mockImages = [
+    {
+        name: 'Windows 11 Pro Master 2025',
+        path: '/home/partimag/win11-master-2025',
+        description: 'Windows 11 Pro + Microsoft 365 Apps + セキュリティソフト',
+        size: '18.5 GB',
+        created_date: '2025-01-15',
+        is_active: true
+    }
+];
+
+// TODO: Implement actual CRUD operations
+</script>
+{% endblock %}

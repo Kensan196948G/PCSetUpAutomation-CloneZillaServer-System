@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>キッティング自動化 トラブルシューティング集</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 20px; }
+    h1, h2, h3 { color: #333; }
+    .issue {
+      border-left: 4px solid #f57c00;
+      padding: 10px 12px;
+      margin: 12px 0;
+      background: #fff8e1;
+    }
+    code { background: #f0f0f0; padding: 2px 4px; border-radius: 3px; }
+    ul { margin-top: 4px; }
+  </style>
+</head>
+<body>
+<h1>キッティング自動化 トラブルシューティング集</h1>
+
+<p>本ドキュメントは、PXEブート〜ODJ〜後処理までの自動展開で発生しがちな問題と、その切り分け・対処法をまとめたものである。</p>
+
+<h2>1. PXE/Clonezilla関連の問題</h2>
+
+<div class="issue">
+  <h3>1-1. PXEブートメニューが表示されない</h3>
+  <strong>症状：</strong>
+  <ul>
+    <li>PC起動時にネットワークブートが始まらない</li>
+    <li>「No bootable device」等のエラーが出る</li>
+  </ul>
+  <strong>確認ポイント：</strong>
+  <ul>
+    <li>BIOS/UEFIで PXEブート（Network Boot）が有効か</li>
+    <li>LANケーブルが展開用VLANに接続されているか</li>
+    <li>DHCPサーバにPXE用オプション（next-server, filename）が設定されているか</li>
+  </ul>
+  <strong>対処：</strong>
+  <ul>
+    <li>テスト用に1台だけ接続し、<code>tcpdump</code> で DHCPのやり取りを確認する</li>
+    <li>既存DHCPと競合していないか確認する（必要ならMACフィルタ/スコープ分離）</li>
+  </ul>
+</div>
+
+<div class="issue">
+  <h3>1-2. Clonezilla展開途中でエラーになる</h3>
+  <strong>症状：</strong>
+  <ul>
+    <li>イメージ展開が途中で停止・失敗する</li>
+  </ul>
+  <strong>確認ポイント：</strong>
+  <ul>
+    <li>マスターイメージ作成時にエラーがなかったか</li>
+    <li>ディスク容量・セクタ形式（MBR/GPT）が適合しているか</li>
+    <li>新版のClonezilla/DRBLを使用しているか</li>
+  </ul>
+  <strong>対処：</strong>
+  <ul>
+    <li>問題のあるPCだけで個別ユニキャスト展開を試す</li>
+    <li>マスターイメージを再作成し比較テストを行う</li>
+  </ul>
+</div>
+
+<h2>2. Windows起動・PC名/ODJ関連の問題</h2>
+
+<div class="issue">
+  <h3>2-1. Windows初回起動後、スクリプトが動いていないように見える</h3>
+  <strong>症状：</strong>
+  <ul>
+    <li>PC名が変わっていない</li>
+    <li>ドメイン参加もされていない</li>
+  </ul>
+  <strong>確認ポイント：</strong>
+  <ul>
+    <li>タスクスケジューラに登録されたタスクが存在するか</li>
+    <li>スクリプトパス・実行権限が正しいか</li>
+    <li>ログファイル（C:\Logs\Setup.log 等）が出力されているか</li>
+  </ul>
+  <strong>対処：</strong>
+  <ul>
+    <li>手動で PowerShell を管理者として起動し、スクリプトを実行して挙動を確認する</li>
+    <li><code>Set-ExecutionPolicy</code> 設定や署名ポリシーを見直す</li>
+  </ul>
+</div>
+
+<div class="issue">
+  <h3>2-2. PC名が意図した形式（YYYYMMDDM）にならない</h3>
+  <strong>症状：</strong>
+  <ul>
+    <li>PC名が「DESKTOP-****」のまま</li>
+    <li>別の日付のPC名になっている</li>
+  </ul>
+  <strong>確認ポイント：</strong>
+  <ul>
+    <li>API <code>/pcinfo</code> のレスポンス内容（pcname）が正しいか</li>
+    <li>pc_masterテーブルに該当Serialが登録されているか</li>
+    <li>テスト中に別のCSVで上書きしていないか</li>
+  </ul>
+  <strong>対処：</strong>
+  <ul>
+    <li>管理GUIからSerial→PC名の紐付けを再確認し、必要に応じて修正</li>
+    <li>スクリプト側でレスポンスログを出力し、何を受け取っているか確認する</li>
+  </ul>
+</div>
+
+<div class="issue">
+  <h3>2-3. ODJ適用後もドメイン参加されていない</h3>
+  <strong>症状：</strong>
+  <ul>
+    <li>再起動後もワークグループのまま</li>
+    <li>AD上に該当コンピュータアカウントが見つからない</li>
+  </ul>
+  <strong>確認ポイント：</strong>
+  <ul>
+    <li>ODJファイルが該当PC名用のものか（別PC名のODJではないか）</li>
+    <li><code>djoin</code> 実行時の戻り値・エラーメッセージ</li>
+    <li>AD側のOU・権限設定に問題がないか</li>
+  </ul>
+  <strong>対処：</strong>
+  <ul>
+    <li>該当PC名でODJファイルを再生成し、再度適用してみる</li>
+    <li>一時的に通常のオンラインドメイン参加（GUI）で参加可能か確認し、ネットワークやポリシーの問題切り分けを行う</li>
+  </ul>
+</div>
+
+<h2>3. Windows Update / アプリ関連の問題</h2>
+
+<div class="issue">
+  <h3>3-1. Windows Update が途中で止まる、終わらない</h3>
+  <strong>症状：</strong>
+  <ul>
+    <li>更新プログラムのダウンロード・インストールが長時間進まない</li>
+  </ul>
+  <strong>確認ポイント：</strong>
+  <ul>
+    <li>WSUSや帯域制御など、社内ポリシーに起因する影響</li>
+    <li>イベントログ（Microsoft-Windows-WindowsUpdateClient）</li>
+    <li>事前のWindows Update修復スクリプトの必要性</li>
+  </ul>
+  <strong>対処：</strong>
+  <ul>
+    <li>問題児PC向けに「Windows Update修復ツール」を事前実行する手順を設ける</li>
+    <li>再現頻度が高い場合は、マスターイメージ側で更新状態を調整する</li>
+  </ul>
+</div>
+
+<div class="issue">
+  <h3>3-2. 標準アプリの一部がインストールされていない</h3>
+  <strong>症状：</strong>
+  <ul>
+    <li>特定のアプリだけ導入されていない</li>
+  </ul>
+  <strong>確認ポイント：</strong>
+  <ul>
+    <li>インストーラのサイレントオプションが正しいか</li>
+    <li>ネットワーク上のインストーラパスにアクセスできているか</li>
+    <li>ログ出力（インストーラの戻り値）</li>
+  </ul>
+  <strong>対処：</strong>
+  <ul>
+    <li>失敗したアプリだけ個別再インストールするスクリプトを用意する</li>
+    <li>統一的なインストーララッパスクリプトを作成し、戻り値とログを標準化する</li>
+  </ul>
+</div>
+
+<h2>4. 管理GUI / API関連の問題</h2>
+
+<div class="issue">
+  <h3>4-1. Windows側からAPI /pcinfo にアクセスできない</h3>
+  <strong>症状：</strong>
+  <ul>
+    <li>PC名が決まらない</li>
+    <li>ログに「API接続エラー」が記録される</li>
+  </ul>
+  <strong>確認ポイント：</strong>
+  <ul>
+    <li>APIサーバのIP/ホスト名が変更されていないか</li>
+    <li>ファイアウォールでポートがブロックされていないか</li>
+    <li>ブラウザから手動で <code>http://drbl-server/api/pcinfo?serial=***</code> にアクセス可能か</li>
+  </ul>
+  <strong>対処：</strong>
+  <ul>
+    <li>DNSまたはhostsファイルで名前解決を明示的に設定する</li>
+    <li>ポートを固定し、ファイアウォール例外をルール化する</li>
+  </ul>
+</div>
+
+<div class="issue">
+  <h3>4-2. 管理GUIでステータスが更新されない</h3>
+  <strong>症状：</strong>
+  <ul>
+    <li>PC側では成功しているが、GUI上はin-progressのまま</li>
+  </ul>
+  <strong>確認ポイント：</strong>
+  <ul>
+    <li>Windows側のログ送信（/log API）が成功しているか</li>
+    <li>DBの setup_logs テーブルにデータが入っているか</li>
+  </ul>
+  <strong>対処：</strong>
+  <ul>
+    <li>ログ送信タイミングを見直す（すべて完了後に1回送るなど）</li>
+    <li>管理GUIの一覧画面で表示に使用するステータス算出ロジックを確認する</li>
+  </ul>
+</div>
+
+</body>
+</html>

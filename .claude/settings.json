@@ -1,0 +1,74 @@
+{
+  "project": {
+    "name": "PC Setup Automation - Clonezilla Server",
+    "description": "会社キッティング自動化フレームワーク - DRBL/Clonezilla + Flask管理GUI + PowerShell自動化",
+    "version": "1.0.0"
+  },
+  "agents": {
+    "enabled": true,
+    "parallel_execution": true,
+    "max_parallel_agents": 5
+  },
+  "mcp": {
+    "servers": {
+      "context7": {
+        "enabled": true,
+        "description": "最新のライブラリドキュメント取得"
+      },
+      "chrome-devtools": {
+        "enabled": true,
+        "description": "ブラウザ自動化・Web GUI テスト"
+      },
+      "serena": {
+        "enabled": true,
+        "description": "セマンティックコード解析・編集"
+      },
+      "sequential-thinking": {
+        "enabled": true,
+        "description": "段階的思考・複雑な問題解決"
+      },
+      "memory": {
+        "enabled": true,
+        "description": "プロジェクトメモリ管理"
+      },
+      "filesystem": {
+        "enabled": true,
+        "description": "高度なファイルシステム操作"
+      },
+      "puppeteer": {
+        "enabled": true,
+        "description": "ヘッドレスブラウザ自動化"
+      }
+    }
+  },
+  "hooks": {
+    "PreToolUse": [],
+    "PostToolUse": [],
+    "Notification": [],
+    "UserPromptSubmit": [],
+    "SessionStart": [],
+    "SessionEnd": [],
+    "Stop": [],
+    "SubagentStart": [],
+    "SubagentStop": [],
+    "PreCompact": []
+  },
+  "development": {
+    "auto_format": true,
+    "auto_lint": true,
+    "auto_test": false,
+    "git_auto_stage": false
+  },
+  "testing": {
+    "framework": {
+      "python": "pytest",
+      "powershell": "Pester",
+      "javascript": "jest"
+    }
+  },
+  "features": {
+    "todo_tracking": true,
+    "memory_persistence": true,
+    "context_aware_suggestions": true
+  }
+}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}セットアップログ - PC Setup Automation{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">セットアップログ</h1>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Serial番号</th>
+            <th>PC名</th>
+            <th>ステータス</th>
+            <th>ステップ</th>
+            <th>タイムスタンプ</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if logs %}
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.serial }}</td>
+                <td>{{ log.pcname }}</td>
+                <td>
+                    <span class="badge bg-{{ 'success' if log.status == 'completed' else 'warning' if log.status == 'in_progress' else 'danger' if log.status == 'failed' else 'secondary' }}">
+                        {{ log.status }}
+                    </span>
+                </td>
+                <td>{{ log.step or 'N/A' }}</td>
+                <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else 'N/A' }}</td>
+                <td>
+                    <a href="#" class="btn btn-sm btn-info">詳細</a>
+                </td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="7" class="text-center">ログはありません</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+{% endblock %}

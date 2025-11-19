@@ -1,0 +1,30 @@
+# Testing requirements for Flask application
+
+# Core testing framework
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-flask==1.3.0
+pytest-mock==3.12.0
+
+# Performance testing
+pytest-benchmark==4.0.0
+memory-profiler==0.61.0
+psutil==5.9.6
+
+# Code coverage
+coverage==7.3.2
+
+# HTTP testing
+requests==2.31.0
+
+# Fake data generation
+Faker==20.1.0
+
+# Application dependencies (should match main requirements.txt)
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-CORS==4.0.0
+python-dotenv==1.0.0
+
+# Database
+SQLAlchemy==2.0.23

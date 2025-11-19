@@ -1,0 +1,39 @@
+[Unit]
+Description=PCキッティング自動化 Flask Webアプリケーション
+After=network.target
+
+[Service]
+Type=notify
+User=root
+Group=root
+WorkingDirectory=/mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/flask-app
+Environment="PATH=/mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/venv/bin"
+EnvironmentFile=/mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/.env.production
+
+# Gunicornでの起動
+ExecStart=/mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/venv/bin/gunicorn \
+    --bind 127.0.0.1:8000 \
+    --workers 4 \
+    --threads 2 \
+    --timeout 30 \
+    --access-logfile /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/logs/flask/access.log \
+    --error-logfile /mnt/Linux-ExHDD/PCSetUpAutomation-CloneZillaServer-Project/production/logs/flask/error.log \
+    --log-level info \
+    --preload \
+    app:app
+
+# 再起動設定
+Restart=always
+RestartSec=10
+KillSignal=SIGTERM
+
+# リソース制限
+MemoryLimit=2G
+CPUQuota=200%
+
+# セキュリティ設定
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

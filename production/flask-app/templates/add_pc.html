@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}新規PC登録 - PC Setup Automation{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">新規PC登録</h1>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('views.add_pc') }}">
+            <div class="mb-3">
+                <label for="serial" class="form-label">Serial番号</label>
+                <input type="text" class="form-control" id="serial" name="serial" required>
+            </div>
+            <div class="mb-3">
+                <label for="pcname" class="form-label">PC名（YYYYMMDDM形式）</label>
+                <input type="text" class="form-control" id="pcname" name="pcname"
+                       placeholder="例: 20251116M" required>
+            </div>
+            <div class="mb-3">
+                <label for="odj_path" class="form-label">ODJファイルパス（オプション）</label>
+                <input type="text" class="form-control" id="odj_path" name="odj_path"
+                       placeholder="例: /srv/odj/20251116M.txt">
+            </div>
+            <button type="submit" class="btn btn-primary">登録</button>
+            <a href="{{ url_for('views.list_pcs') }}" class="btn btn-secondary">キャンセル</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

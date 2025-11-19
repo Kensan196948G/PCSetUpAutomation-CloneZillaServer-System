@@ -1,0 +1,58 @@
+{
+  "api": {
+    "server": "http://192.168.1.100:5000",
+    "timeout": 30,
+    "retry_count": 3,
+    "retry_delay": 5
+  },
+  "domain": {
+    "name": "example.com",
+    "ou": "OU=Computers,DC=example,DC=com"
+  },
+  "windows_update": {
+    "max_iterations": 5,
+    "reboot_if_required": true,
+    "categories": [
+      "Security Updates",
+      "Critical Updates",
+      "Definition Updates"
+    ]
+  },
+  "apps": {
+    "install_list": [
+      {
+        "name": "Microsoft 365 Apps",
+        "installer": "C:\\Setup\\Apps\\Microsoft365\\setup.exe",
+        "args": "/configure C:\\Setup\\Apps\\Microsoft365\\configuration.xml",
+        "silent": true,
+        "check_path": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE"
+      },
+      {
+        "name": "Google Chrome",
+        "installer": "C:\\Setup\\Apps\\GoogleChromeStandaloneEnterprise64.msi",
+        "args": "",
+        "silent": true,
+        "check_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+      },
+      {
+        "name": "Adobe Acrobat Reader DC",
+        "installer": "C:\\Setup\\Apps\\AcroRdrDC.exe",
+        "args": "/sAll /rs /msi EULA_ACCEPT=YES",
+        "silent": true,
+        "check_path": "C:\\Program Files (x86)\\Adobe\\Acrobat Reader DC\\Reader\\AcroRd32.exe"
+      },
+      {
+        "name": "7-Zip",
+        "installer": "C:\\Setup\\Apps\\7z-x64.msi",
+        "args": "",
+        "silent": true,
+        "check_path": "C:\\Program Files\\7-Zip\\7zFM.exe"
+      }
+    ]
+  },
+  "logging": {
+    "path": "C:\\Setup\\Logs",
+    "level": "INFO",
+    "max_size_mb": 10
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "timestamp": "2025-11-17T12:45:32.984667",
+  "summary": {
+    "total": 14,
+    "passed": 13,
+    "failed": 1,
+    "pass_rate": 92.85714285714286,
+    "results": [
+      {
+        "test": "DRBLClient インスタンス化",
+        "success": true,
+        "message": "image_home=/home/partimag",
+        "details": null
+      },
+      {
+        "test": "ヘルスチェック実行",
+        "success": true,
+        "message": "DRBL installed: True, Images: 1",
+        "details": null
+      },
+      {
+        "test": "list_images() 実行",
+        "success": true,
+        "message": "1 images found",
+        "details": null
+      },
+      {
+        "test": "get_image_info() 実行",
+        "success": true,
+        "message": "Image: test-win11-master",
+        "details": null
+      },
+      {
+        "test": "マルチキャスト展開開始",
+        "success": true,
+        "message": "DRBL未インストール環境のため正常なエラー",
+        "details": null
+      },
+      {
+        "test": "ユニキャスト展開開始",
+        "success": true,
+        "message": "DRBL未インストール環境のため正常なエラー",
+        "details": null
+      },
+      {
+        "test": "展開ステータス取得",
+        "success": true,
+        "message": "Running: False",
+        "details": null
+      },
+      {
+        "test": "ODJファイル一覧取得",
+        "success": true,
+        "message": "0 ODJ files found",
+        "details": null
+      },
+      {
+        "test": "存在しないイメージ検索",
+        "success": true,
+        "message": "正しくNoneを返却",
+        "details": null
+      },
+      {
+        "test": "不正なイメージで展開開始",
+        "success": true,
+        "message": "正しくDRBLConfigErrorが発生",
+        "details": null
+      },
+      {
+        "test": "image_home 存在確認",
+        "success": true,
+        "message": "/home/partimag",
+        "details": null
+      },
+      {
+        "test": "image_home 書き込み権限",
+        "success": true,
+        "message": "書き込み可能",
+        "details": null
+      },
+      {
+        "test": "odj_home 存在確認",
+        "success": true,
+        "message": "/srv/odj",
+        "details": null
+      },
+      {
+        "test": "odj_home 書き込み権限",
+        "success": false,
+        "message": "書き込み不可 (要sudo)",
+        "details": null
+      }
+    ]
+  }
+}

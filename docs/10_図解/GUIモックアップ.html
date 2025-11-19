@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>DRBL管理GUI 画面モックアップ</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 20px; }
+    h1, h2 { color: #333; }
+    .nav { background: #263238; color: #fff; padding: 10px 16px; }
+    .nav span { margin-right: 16px; cursor: pointer; }
+    .container { margin-top: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 13px; }
+    th { background: #f0f0f0; }
+    .btn { display: inline-block; padding: 6px 10px; border-radius: 4px;
+           border: 1px solid #1976d2; color: #1976d2; text-decoration: none;
+           font-size: 12px; margin-right: 6px; }
+    .btn-primary { background: #1976d2; color: #fff; }
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 10px;
+             font-size: 11px; background: #eee; }
+    .badge-ok { background: #c8e6c9; }
+    .badge-error { background: #ffcdd2; }
+    .form-group { margin-bottom: 10px; }
+    label { display: block; font-size: 13px; margin-bottom: 4px; }
+    input[type="text"], input[type="file"], select {
+      width: 100%; padding: 6px; font-size: 13px;
+      border: 1px solid #ccc; border-radius: 4px;
+    }
+    .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="nav">
+  <span>PC一覧</span>
+  <span>CSVインポート</span>
+  <span>ODJ管理</span>
+  <span>展開ログ</span>
+  <span>設定</span>
+</div>
+
+<div class="container">
+  <h1>DRBL管理GUI モックアップ</h1>
+
+  <h2>PCマスタ一覧</h2>
+  <a href="#" class="btn btn-primary">新規登録</a>
+  <a href="#" class="btn">CSVインポート</a>
+  <a href="#" class="btn">CSVエクスポート</a>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Serial</th>
+        <th>PC名（YYYYMMDDM）</th>
+        <th>ODJパス</th>
+        <th>最終ステータス</th>
+        <th>最終更新</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>ABC123456</td>
+        <td>20251116M</td>
+        <td>/odj/20251116M.txt</td>
+        <td><span class="badge badge-ok">completed</span></td>
+        <td>2025-11-16 14:23</td>
+        <td>
+          <a href="#" class="btn">詳細</a>
+          <a href="#" class="btn">編集</a>
+        </td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>DEF987654</td>
+        <td>20251117M</td>
+        <td>/odj/20251117M.txt</td>
+        <td><span class="badge">in-progress</span></td>
+        <td>2025-11-17 09:12</td>
+        <td>
+          <a href="#" class="btn">詳細</a>
+          <a href="#" class="btn">編集</a>
+        </td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>XYZ112233</td>
+        <td>20251118M</td>
+        <td>/odj/20251118M.txt</td>
+        <td><span class="badge badge-error">failed</span></td>
+        <td>2025-11-18 10:01</td>
+        <td>
+          <a href="#" class="btn">詳細</a>
+          <a href="#" class="btn">再実行</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>右ペイン：選択PC詳細（例）</h2>
+
+  <div class="grid">
+    <div>
+      <h3>PC詳細</h3>
+      <div class="form-group">
+        <label>Serial</label>
+        <input type="text" value="ABC123456">
+      </div>
+      <div class="form-group">
+        <label>PC名</label>
+        <input type="text" value="20251116M">
+      </div>
+      <div class="form-group">
+        <label>ODJファイルパス</label>
+        <input type="text" value="/odj/20251116M.txt">
+      </div>
+      <div class="form-group">
+        <label>状態</label>
+        <select>
+          <option selected>completed</option>
+          <option>in-progress</option>
+          <option>failed</option>
+        </select>
+      </div>
+      <a href="#" class="btn btn-primary">保存</a>
+    </div>
+    <div>
+      <h3>ODJファイル管理</h3>
+      <div class="form-group">
+        <label>ODJファイルアップロード</label>
+        <input type="file">
+      </div>
+      <a href="#" class="btn btn-primary">アップロード</a>
+
+      <h3 style="margin-top:20px;">最近の展開ログ</h3>
+      <ul>
+        <li>2025-11-16 14:23 completed</li>
+        <li>2025-11-16 13:55 ODJ適用成功</li>
+        <li>2025-11-16 13:30 マスターイメージ展開完了</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

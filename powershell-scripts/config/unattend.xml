@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+    <!--
+        Windows 11自動セットアップ用 unattend.xml サンプル
+
+        このファイルをSysprep実行時に使用します。
+        Windows初回起動時に自動ログオンして、setup.ps1を実行します。
+
+        使用方法:
+        C:\Windows\System32\Sysprep\sysprep.exe /generalize /oobe /shutdown /unattend:C:\Setup\config\unattend.xml
+    -->
+
+    <!-- Windows PE 設定 -->
+    <settings pass="windowsPE">
+        <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <SetupUILanguage>
+                <UILanguage>ja-JP</UILanguage>
+            </SetupUILanguage>
+            <InputLocale>ja-JP</InputLocale>
+            <SystemLocale>ja-JP</SystemLocale>
+            <UILanguage>ja-JP</UILanguage>
+            <UserLocale>ja-JP</UserLocale>
+        </component>
+    </settings>
+
+    <!-- セットアップ設定 -->
+    <settings pass="specialize">
+        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <!-- コンピュータ名（一時的、setup.ps1で変更される） -->
+            <ComputerName>TEMP-PC</ComputerName>
+
+            <!-- タイムゾーン -->
+            <TimeZone>Tokyo Standard Time</TimeZone>
+
+            <!-- プロダクトキー（必要に応じて設定） -->
+            <!-- <ProductKey>xxxxx-xxxxx-xxxxx-xxxxx-xxxxx</ProductKey> -->
+        </component>
+
+        <!-- ネットワーク設定（DHCP） -->
+        <component name="Microsoft-Windows-TCPIP" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <Interfaces>
+                <Interface wcm:action="add">
+                    <Identifier>Ethernet</Identifier>
+                    <Ipv4Settings>
+                        <DhcpEnabled>true</DhcpEnabled>
+                    </Ipv4Settings>
+                </Interface>
+            </Interfaces>
+        </component>
+    </settings>
+
+    <!-- OOBE（Out-of-Box Experience）設定 -->
+    <settings pass="oobeSystem">
+        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+            <!-- OOBE設定 -->
+            <OOBE>
+                <HideEULAPage>true</HideEULAPage>
+                <HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
+                <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+                <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+                <NetworkLocation>Work</NetworkLocation>
+                <ProtectYourPC>3</ProtectYourPC>
+                <SkipUserOOBE>true</SkipUserOOBE>
+                <SkipMachineOOBE>true</SkipMachineOOBE>
+            </OOBE>
+
+            <!-- ローカル管理者アカウント -->
+            <UserAccounts>
+                <AdministratorPassword>
+                    <Value>UABhAHMAcwB3AG8AcgBkAA==</Value>  <!-- Base64エンコード: "Password" -->
+                    <PlainText>false</PlainText>
+                </AdministratorPassword>
+                <LocalAccounts>
+                    <LocalAccount wcm:action="add">
+                        <Password>
+                            <Value>UABhAHMAcwB3AG8AcgBkAA==</Value>
+                            <PlainText>false</PlainText>
+                        </Password>
+                        <Description>Setup Account</Description>
+                        <DisplayName>Setup</DisplayName>
+                        <Group>Administrators</Group>
+                        <Name>Setup</Name>
+                    </LocalAccount>
+                </LocalAccounts>
+            </UserAccounts>
+
+            <!-- 自動ログオン設定 -->
+            <AutoLogon>
+                <Enabled>true</Enabled>
+                <Username>Setup</Username>
+                <Password>
+                    <Value>UABhAHMAcwB3AG8AcgBkAA==</Value>
+                    <PlainText>false</PlainText>
+                </Password>
+                <LogonCount>1</LogonCount>
+            </AutoLogon>
+
+            <!-- 初回ログオン時のコマンド実行 -->
+            <FirstLogonCommands>
+                <!-- PowerShell実行ポリシーの設定 -->
+                <SynchronousCommand wcm:action="add">
+                    <Order>1</Order>
+                    <CommandLine>powershell.exe -Command "Set-ExecutionPolicy Bypass -Scope LocalMachine -Force"</CommandLine>
+                    <Description>PowerShell実行ポリシー設定</Description>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+
+                <!-- 自動セットアップスクリプトの実行 -->
+                <SynchronousCommand wcm:action="add">
+                    <Order>2</Order>
+                    <CommandLine>powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Setup\setup.ps1</CommandLine>
+                    <Description>自動セットアップスクリプト実行</Description>
+                    <RequiresUserInput>false</RequiresUserInput>
+                </SynchronousCommand>
+            </FirstLogonCommands>
+
+            <!-- ディスプレイ設定 -->
+            <Display>
+                <ColorDepth>32</ColorDepth>
+                <HorizontalResolution>1920</HorizontalResolution>
+                <VerticalResolution>1080</VerticalResolution>
+            </Display>
+        </component>
+
+        <!-- 国際化設定 -->
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <InputLocale>ja-JP</InputLocale>
+            <SystemLocale>ja-JP</SystemLocale>
+            <UILanguage>ja-JP</UILanguage>
+            <UserLocale>ja-JP</UserLocale>
+        </component>
+    </settings>
+</unattend>

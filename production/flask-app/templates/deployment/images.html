@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}マスターイメージ管理 - PC Setup Automation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('views.index') }}">
+                    <i class="bi bi-house-door me-1"></i>ホーム
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('views.deployment_list') }}">
+                    <i class="bi bi-cloud-arrow-down me-1"></i>展開管理
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-images me-1"></i>マスターイメージ管理
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="bi bi-images me-2"></i>マスターイメージ管理
+                    </h2>
+                    <small class="text-muted">Clonezillaマスターイメージの一覧・管理 (<span id="imagesCount">{{ images | length }}</span>件)</small>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary" id="refreshImagesBtn" title="更新">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadImageModal">
+                        <i class="bi bi-upload me-1"></i>イメージアップロード
+                    </button>
+                    <a href="{{ url_for('views.deployment') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>新規展開
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Images Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <!-- Loading indicator -->
+                    <div id="imagesLoading" class="text-center py-4 d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">読み込み中...</span>
+                        </div>
+                        <p class="mt-2 text-muted">イメージを読み込んでいます...</p>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 25%;">
+                                        <i class="bi bi-image me-1"></i>イメージ名
+                                    </th>
+                                    <th style="width: 20%;">
+                                        <i class="bi bi-folder me-1"></i>パス
+                                    </th>
+                                    <th style="width: 12%;">
+                                        <i class="bi bi-hdd me-1"></i>サイズ
+                                    </th>
+                                    <th style="width: 15%;">
+                                        <i class="bi bi-calendar me-1"></i>作成日時
+                                    </th>
+                                    <th style="width: 12%;">
+                                        <i class="bi bi-status me-1"></i>状態
+                                    </th>
+                                    <th style="width: 16%;">
+                                        <i class="bi bi-gear me-1"></i>操作
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="imagesList">
+                                {% if images %}
+                                    {% for image in images %}
+                                    <tr>
+                                        <td>
+                                            <strong class="text-dark">{{ image.name }}</strong>
+                                            {% if image.description %}
+                                                <br>
+                                                <small class="text-muted">{{ image.description }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <code class="text-break small">{{ image.path }}</code>
+                                        </td>
+                                        <td>
+                                            <span>{{ image.size }}</span>
+                                        </td>
+                                        <td>
+                                            {{ image.created_date }}
+                                        </td>
+                                        <td>
+                                            {% if image.is_active %}
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-check-circle me-1"></i>デフォルト
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-circle me-1"></i>非アクティブ
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="/api/images/{{ image.name }}"
+                                                   class="btn btn-outline-primary"
+                                                   title="詳細情報を表示"
+                                                   target="_blank">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <button type="button"
+                                                        class="btn btn-outline-danger delete-image-btn"
+                                                        data-image-name="{{ image.name }}"
+                                                        title="イメージを削除">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="bi bi-inbox me-2"></i>
+                                            マスターイメージがありません
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadImageModal" tabindex="-1" aria-labelledby="uploadImageModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadImageModalLabel">
+                        <i class="bi bi-upload me-2"></i>マスターイメージアップロード
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadImageForm">
+                        <div class="mb-3">
+                            <label for="imageFile" class="form-label">イメージファイル (.tar.gz または .zip)</label>
+                            <input type="file" class="form-control" id="imageFile" accept=".tar.gz,.tgz,.zip" required>
+                            <div class="form-text">
+                                Clonezillaイメージを圧縮したファイルを選択してください
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="imageName" class="form-label">イメージ名 (オプション)</label>
+                            <input type="text" class="form-control" id="imageName" placeholder="自動生成されます">
+                            <div class="form-text">
+                                空欄の場合、ファイル名から自動生成されます
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="imageDescription" class="form-label">説明 (オプション)</label>
+                            <textarea class="form-control" id="imageDescription" rows="3"></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-upload me-1"></i>アップロード開始
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Information Card -->
+    <div class="row mt-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-question-circle me-2"></i>マスターイメージについて
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>マスターイメージ</strong>は、Clonezillaで作成されたWindows PCのマスター構成イメージです。
+                    </p>
+                    <ul class="mb-0">
+                        <li>イメージファイルは <code>/home/partimag/</code> に保存されます</li>
+                        <li>デフォルトイメージは新規展開時に自動で選択されます</li>
+                        <li>複数のイメージを管理することで、異なる構成の展開が可能です</li>
+                        <li>イメージのサイズは圧縮形式（zstd/gzip）に依存します</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm bg-light">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning-charge me-2"></i>クイック操作
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('views.deployment') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i>新規展開を作成
+                        </a>
+                        <a href="{{ url_for('views.deployment_list') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-list-ul me-1"></i>展開一覧へ戻る
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/images.js') }}"></script>
+{% endblock %}

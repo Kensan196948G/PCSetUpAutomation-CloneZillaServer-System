@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}ODJアップロード - PC Setup Automation{% endblock %}
+
+{% block extra_css %}
+<style>
+.drop-zone {
+    border: 3px dashed #dee2e6;
+    border-radius: 10px;
+    padding: 50px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background-color: #f8f9fa;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.file-list-item {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+}
+
+.file-list-item:hover {
+    background-color: #e9ecef;
+}
+
+.upload-success {
+    border-left: 4px solid #198754;
+}
+
+.upload-error {
+    border-left: 4px solid #dc3545;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('views.index') }}">ダッシュボード</a></li>
+                <li class="breadcrumb-item active" aria-current="page">ODJアップロード</li>
+            </ol>
+        </nav>
+        <h1 class="display-5 fw-bold">
+            <i class="bi bi-file-earmark-arrow-up text-primary"></i>
+            ODJファイルアップロード
+        </h1>
+        <p class="lead text-muted">Offline Domain Join（ODJ）ファイルを一括アップロード</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- PC Selection -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-pc-display text-info"></i>
+                    対象PC選択
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="pcSelect" class="form-label fw-bold">アップロード先PC</label>
+                    <select class="form-select form-select-lg" id="pcSelect">
+                        <option value="">PCを選択してください...</option>
+                        {% if pcs %}
+                            {% for pc in pcs %}
+                            <option value="{{ pc.id }}" data-serial="{{ pc.serial }}" data-pcname="{{ pc.pcname }}">
+                                {{ pc.pcname }} ({{ pc.serial }})
+                                {% if pc.odj_path %}
+                                    - ✓ ODJ設定済み
+                                {% else %}
+                                    - 未設定
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        {% else %}
+                            <option value="" disabled>登録されているPCがありません</option>
+                        {% endif %}
+                    </select>
+                    <div class="form-text">
+                        <i class="bi bi-info-circle me-1"></i>
+                        ODJファイルを紐付けるPCを選択してください
+                    </div>
+                </div>
+
+                <!-- Selected PC Info -->
+                <div class="alert alert-info d-none" id="pcInfo">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-laptop fs-3 me-3"></i>
+                        <div>
+                            <h6 class="mb-1">選択中のPC</h6>
+                            <p class="mb-0">
+                                <strong id="selectedPCName">-</strong><br>
+                                <small>Serial: <code id="selectedSerial">-</code></small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Area -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-upload text-success"></i>
+                    ODJファイルアップロード
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="odjUploadForm" action="{{ url_for('views.odj_upload_process') }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" id="pcId" name="pc_id">
+
+                    <div class="drop-zone" id="dropZone">
+                        <i class="bi bi-cloud-upload fs-1 text-muted"></i>
+                        <h5 class="mt-3">ODJファイルをドラッグ&ドロップ</h5>
+                        <p class="text-muted">または</p>
+                        <button type="button" class="btn btn-primary" onclick="document.getElementById('odjFile').click()">
+                            <i class="bi bi-folder2-open me-2"></i>ファイルを選択
+                        </button>
+                        <input type="file" id="odjFile" name="odj_file" accept=".txt,.blob" style="display: none;">
+                        <p class="text-muted mt-3 mb-0">
+                            <small>対応形式: .txt, .blob / 最大サイズ: 5MB</small>
+                        </p>
+                    </div>
+
+                    <!-- File List -->
+                    <div class="mt-4" id="fileListContainer" style="display: none;">
+                        <h6 class="fw-bold mb-3">アップロード予定ファイル</h6>
+                        <div id="fileList"></div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="mt-4 text-end">
+                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn" disabled>
+                            <i class="bi bi-cloud-upload me-2"></i>アップロード
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- ODJ Info Card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-question-circle"></i>
+                    ODJとは？
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    <strong>Offline Domain Join（ODJ）</strong>は、ネットワーク接続なしでActive Directoryドメインに参加できる仕組みです。
+                </p>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        オフライン環境でドメイン参加
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        大量PCの自動化に最適
+                    </li>
+                    <li class="mb-0">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        セキュアな展開が可能
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- File Format Info -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-file-earmark-text text-info"></i>
+                    ファイル形式
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning mb-3">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>注意:</strong> ODJファイルは機密情報を含みます
+                </div>
+                <p class="mb-2"><strong>対応拡張子:</strong></p>
+                <ul class="mb-3">
+                    <li><code>.txt</code> - テキスト形式</li>
+                    <li><code>.blob</code> - バイナリ形式</li>
+                </ul>
+                <p class="mb-2"><strong>生成方法:</strong></p>
+                <pre class="bg-light p-2 rounded"><code>djoin /provision /domain CONTOSO /machine PC01 /savefile C:\odj\PC01.txt</code></pre>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-lightning-charge text-warning"></i>
+                    クイックアクション
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('views.list_pcs') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-list-ul me-2"></i>PC一覧
+                    </a>
+                    <a href="{{ url_for('views.csv_import') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>CSV一括登録
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('odjFile');
+const pcSelect = document.getElementById('pcSelect');
+const pcInfo = document.getElementById('pcInfo');
+const pcId = document.getElementById('pcId');
+const selectedPCName = document.getElementById('selectedPCName');
+const selectedSerial = document.getElementById('selectedSerial');
+const fileListContainer = document.getElementById('fileListContainer');
+const fileList = document.getElementById('fileList');
+const submitBtn = document.getElementById('submitBtn');
+
+// PC selection handler
+pcSelect.addEventListener('change', function() {
+    if (this.value) {
+        const selectedOption = this.options[this.selectedIndex];
+        pcId.value = this.value;
+        selectedPCName.textContent = selectedOption.dataset.pcname;
+        selectedSerial.textContent = selectedOption.dataset.serial;
+        pcInfo.classList.remove('d-none');
+        updateSubmitButton();
+    } else {
+        pcInfo.classList.add('d-none');
+        updateSubmitButton();
+    }
+});
+
+// Drag and drop handlers
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+        handleFileSelect(files[0]);
+    }
+});
+
+// File input change handler
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        handleFileSelect(e.target.files[0]);
+    }
+});
+
+// Handle file selection
+function handleFileSelect(file) {
+    const validExtensions = ['.txt', '.blob'];
+    const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+    if (!validExtensions.includes(fileExtension)) {
+        alert('ODJファイル（.txt または .blob）を選択してください');
+        return;
+    }
+
+    // Display file in list
+    fileList.innerHTML = `
+        <div class="file-list-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-file-earmark-text fs-3 text-primary me-3"></i>
+                    <div>
+                        <h6 class="mb-0">${file.name}</h6>
+                        <small class="text-muted">${formatFileSize(file.size)}</small>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFile()">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    fileListContainer.style.display = 'block';
+    updateSubmitButton();
+}
+
+// Clear file
+function clearFile() {
+    fileInput.value = '';
+    fileListContainer.style.display = 'none';
+    updateSubmitButton();
+}
+
+// Update submit button state
+function updateSubmitButton() {
+    submitBtn.disabled = !(pcSelect.value && fileInput.files.length > 0);
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Form submission
+document.getElementById('odjUploadForm').addEventListener('submit', function(e) {
+    if (!confirm('選択したPCにODJファイルをアップロードしますか？')) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}
