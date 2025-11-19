@@ -1,0 +1,2 @@
+# PCSetUpAutomation-CloneZillaServer-System
+PCキッティング展開システム
