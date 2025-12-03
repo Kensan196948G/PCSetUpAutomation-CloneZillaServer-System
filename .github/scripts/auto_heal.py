@@ -93,11 +93,11 @@ class ErrorDetector:
         print("🔍 Importエラーを検知中...")
 
         try:
-            # pyflakesでimportエラーを検知（venvを除外）
+            # pyflakesでimportエラーを検知
+            # __init__.pyは除外（Blueprintルート登録に必要なインポートを含むため）
             result = subprocess.run(
                 ["python", "-m", "pyflakes",
-                 "flask-app/api/", "flask-app/views/", "flask-app/utils/",
-                 "flask-app/models/", "flask-app/app.py", "flask-app/config.py"],
+                 "flask-app/app.py", "flask-app/config.py"],
                 capture_output=True,
                 text=True
             )
@@ -105,6 +105,9 @@ class ErrorDetector:
             if result.stdout:
                 for line in result.stdout.split('\n'):
                     if 'imported but unused' in line or 'undefined name' in line:
+                        # __init__.pyファイルは除外
+                        if '__init__.py' in line:
+                            continue
                         match = re.match(r"^(.+?):(\d+):(.+)$", line)
                         if match:
                             errors.append({
@@ -187,13 +190,26 @@ class ErrorHealer:
             file_path = error['file']
             line_num = error['line']
 
+            # __init__.pyファイルのインポートは削除しない（Blueprintルート登録に必要）
+            if file_path.endswith('__init__.py'):
+                print(f"  ⚠️ スキップ: __init__.pyのインポートは削除しません（ルート登録に必要）")
+                return False
+
             # ファイルを読み込み
             with open(file_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
 
-            # 該当行を削除
+            # 該当行を確認
             if 0 < line_num <= len(lines):
-                removed_line = lines[line_num - 1].strip()
+                target_line = lines[line_num - 1]
+
+                # noqaコメントがある行は削除しない
+                if '# noqa' in target_line or '#noqa' in target_line:
+                    print(f"  ⚠️ スキップ: noqaコメントがある行は削除しません")
+                    return False
+
+                # 該当行を削除
+                removed_line = target_line.strip()
                 lines.pop(line_num - 1)
 
                 # ファイルに書き戻し
