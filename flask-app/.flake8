@@ -1,0 +1,30 @@
+[flake8]
+# 除外するディレクトリ・ファイル
+exclude =
+    venv,
+    .venv,
+    __pycache__,
+    .git,
+    build,
+    dist,
+    *.egg-info,
+    migrations,
+    .tox,
+    .mypy_cache,
+    .pytest_cache
+
+# 最大行長（Flask/Pythonの標準に合わせる）
+max-line-length = 120
+
+# 無視するエラーコード
+# E501: line too long (max-line-lengthで対応)
+# W503: line break before binary operator (PEP8で許容)
+ignore =
+    W503
+
+# 複雑度の上限
+max-complexity = 10
+
+# ファイルごとの統計を表示
+statistics = True
+show-source = True

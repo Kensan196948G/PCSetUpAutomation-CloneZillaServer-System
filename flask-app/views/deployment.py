@@ -2,7 +2,6 @@
 import logging
 from flask import render_template, request, redirect, url_for, flash
 from . import views_bp
-from models import db
 from models.deployment import Deployment
 from models.pc_master import PCMaster
 

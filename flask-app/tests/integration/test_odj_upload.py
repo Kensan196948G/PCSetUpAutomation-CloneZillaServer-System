@@ -2,7 +2,6 @@
 import io
 import os
 import pytest
-from pathlib import Path
 from models import PCMaster
 
 

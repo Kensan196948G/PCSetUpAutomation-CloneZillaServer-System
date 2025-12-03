@@ -1,7 +1,5 @@
 """Integration tests for deployment API functionality."""
 import pytest
-import time
-from models import PCMaster
 
 
 class TestDeploymentAPI:

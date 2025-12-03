@@ -4,7 +4,6 @@ import io
 import logging
 from datetime import datetime
 from flask import request, jsonify, current_app
-from werkzeug.utils import secure_filename
 from sqlalchemy.exc import IntegrityError
 from . import api_bp
 from models import db
@@ -227,7 +226,8 @@ def export_csv():
         output.seek(0)
         response = current_app.make_response(output.getvalue())
         response.headers['Content-Type'] = 'text/csv'
-        response.headers['Content-Disposition'] = f'attachment; filename=pc_master_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=pc_master_export_{
+            datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
 
         logger.info(f'CSV export completed: {len(pcs)} records')
         return response

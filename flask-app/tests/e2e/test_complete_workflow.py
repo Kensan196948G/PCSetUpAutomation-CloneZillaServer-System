@@ -1,9 +1,8 @@
 """End-to-End tests for complete PC setup workflow."""
 import io
-import os
 import pytest
 import time
-from models import PCMaster, SetupLog
+from models import PCMaster
 
 
 class TestCompleteWorkflow:

@@ -6,7 +6,7 @@ Records setup progress logs.
 import logging
 import re
 from datetime import datetime
-from flask import request, jsonify, current_app
+from flask import request, jsonify
 from . import api_bp
 from models import db, SetupLog
 

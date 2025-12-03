@@ -1,10 +1,9 @@
 """Clonezilla Master Image Management API endpoints."""
-import os
 import logging
 import shutil
 from pathlib import Path
 from datetime import datetime
-from flask import request, jsonify, current_app
+from flask import request, jsonify
 from . import api_bp
 from utils.drbl_client import DRBLClient
 

@@ -8,7 +8,7 @@ DELETE /api/pcs/<id> - Delete PC
 import logging
 import csv
 import io
-from flask import request, jsonify, current_app
+from flask import request, jsonify
 from sqlalchemy.exc import IntegrityError
 from . import api_bp
 from .validators import (

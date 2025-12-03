@@ -6,7 +6,7 @@ Returns PC name and ODJ file path for a given serial number.
 import logging
 import time
 import re
-from flask import request, jsonify, current_app
+from flask import request, jsonify
 from . import api_bp
 from models import PCMaster
 

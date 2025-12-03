@@ -7,8 +7,6 @@ enabling automated image deployment, status monitoring, and configuration.
 import os
 import subprocess
 import logging
-import json
-import time
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from pathlib import Path
@@ -18,17 +16,14 @@ logger = logging.getLogger(__name__)
 
 class DRBLException(Exception):
     """Base exception for DRBL-related errors."""
-    pass
 
 
 class DRBLCommandError(DRBLException):
     """Exception raised when DRBL command execution fails."""
-    pass
 
 
 class DRBLConfigError(DRBLException):
     """Exception raised when DRBL configuration is invalid."""
-    pass
 
 
 class DRBLClient:

@@ -1,5 +1,5 @@
 """Main views."""
-from flask import render_template, current_app
+from flask import render_template
 from . import views_bp
 from models import PCMaster, SetupLog
 

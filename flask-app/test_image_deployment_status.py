@@ -9,7 +9,6 @@ PCマスターイメージ取り込み・展開機能実装状況確認スクリ
 4. 各機能のテスト実行可否
 """
 
-import os
 import sys
 import json
 from pathlib import Path

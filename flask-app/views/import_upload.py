@@ -5,8 +5,8 @@ from io import StringIO
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from flask import (
-    render_template, request, redirect, url_for,
-    flash, jsonify, current_app
+    render_template, request, flash, jsonify,
+    current_app
 )
 from . import views_bp
 from models import db, PCMaster
@@ -172,12 +172,12 @@ def odj_upload():
     """
     # Get all PCs without ODJ files
     pcs_without_odj = PCMaster.query.filter(
-        (PCMaster.odj_path == None) | (PCMaster.odj_path == '')
+        (PCMaster.odj_path is None) | (PCMaster.odj_path == '')
     ).order_by(PCMaster.created_at.desc()).all()
 
     # Get all PCs with ODJ files
     pcs_with_odj = PCMaster.query.filter(
-        PCMaster.odj_path != None,
+        PCMaster.odj_path is not None,
         PCMaster.odj_path != ''
     ).order_by(PCMaster.created_at.desc()).limit(20).all()
 
@@ -313,7 +313,7 @@ def deploy_settings():
     try:
         if os.path.exists(image_path):
             images = [d for d in os.listdir(image_path)
-                     if os.path.isdir(os.path.join(image_path, d))]
+                      if os.path.isdir(os.path.join(image_path, d))]
             images.sort(reverse=True)  # Latest first
     except Exception as e:
         current_app.logger.error(f'Failed to list images: {str(e)}')
@@ -321,7 +321,7 @@ def deploy_settings():
 
     # Get all PCs with ODJ files
     pcs = PCMaster.query.filter(
-        PCMaster.odj_path != None,
+        PCMaster.odj_path is not None,
         PCMaster.odj_path != ''
     ).order_by(PCMaster.created_at.desc()).all()
 

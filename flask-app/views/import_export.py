@@ -1,6 +1,6 @@
 """Import/Export views."""
 import logging
-from flask import render_template, request, redirect, url_for, flash, current_app
+from flask import render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 import os
 import csv

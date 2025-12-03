@@ -2,8 +2,8 @@
 import io
 import time
 import pytest
-from statistics import mean, stdev
-from models import PCMaster, SetupLog
+from statistics import mean
+from models import PCMaster
 
 
 class TestBulkPerformance:

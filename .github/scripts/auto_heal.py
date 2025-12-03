@@ -30,7 +30,7 @@ class ErrorDetector:
 
         try:
             result = subprocess.run(
-                ["flake8", "flask-app/", "--select=E9,F63,F7,F82", "--format=json"],
+                ["flake8", "flask-app/", "--config=flask-app/.flake8", "--select=E9,F63,F7,F82", "--format=json"],
                 capture_output=True,
                 text=True
             )
@@ -60,7 +60,7 @@ class ErrorDetector:
 
         try:
             result = subprocess.run(
-                ["pytest", "tests/", "--tb=short", "--maxfail=10", "-v"],
+                ["pytest", "flask-app/tests/", "--tb=short", "--maxfail=10", "-v"],
                 capture_output=True,
                 text=True
             )
@@ -91,9 +91,11 @@ class ErrorDetector:
         print("🔍 Importエラーを検知中...")
 
         try:
-            # pyflakesでimportエラーを検知
+            # pyflakesでimportエラーを検知（venvを除外）
             result = subprocess.run(
-                ["python", "-m", "pyflakes", "flask-app/"],
+                ["python", "-m", "pyflakes",
+                 "flask-app/api/", "flask-app/views/", "flask-app/utils/",
+                 "flask-app/models/", "flask-app/app.py", "flask-app/config.py"],
                 capture_output=True,
                 text=True
             )
@@ -123,7 +125,7 @@ class ErrorDetector:
 
         try:
             result = subprocess.run(
-                ["flake8", "flask-app/", "--count", "--statistics"],
+                ["flake8", "flask-app/", "--config=flask-app/.flake8", "--count", "--statistics"],
                 capture_output=True,
                 text=True
             )

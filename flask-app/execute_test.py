@@ -2,7 +2,6 @@
 import sqlite3
 import os
 import subprocess
-import sys
 
 print("=" * 60)
 print("PC EDIT FUNCTIONALITY TEST")

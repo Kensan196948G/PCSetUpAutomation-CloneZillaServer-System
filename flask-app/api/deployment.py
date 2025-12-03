@@ -1,9 +1,7 @@
 """Deployment Management API endpoints."""
 import logging
-import subprocess
 from datetime import datetime
-from pathlib import Path
-from flask import request, jsonify, current_app
+from flask import request, jsonify
 from . import api_bp
 from models import db
 from models.deployment import Deployment
