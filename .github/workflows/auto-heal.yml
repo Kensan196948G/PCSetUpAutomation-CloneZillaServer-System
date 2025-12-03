@@ -1,0 +1,324 @@
+name: Auto Error Detection & Healing System
+
+on:
+  # 30分間隔で自動実行
+  schedule:
+    - cron: '*/30 * * * *'  # 30分ごとに実行
+
+  # 手動実行も可能
+  workflow_dispatch:
+    inputs:
+      max_iterations:
+        description: '最大リトライ回数'
+        required: false
+        default: '15'
+
+  # プッシュ時も実行
+  push:
+    branches:
+      - main
+      - develop
+
+  # PR時も実行
+  pull_request:
+    branches:
+      - main
+
+env:
+  MAX_HEAL_ITERATIONS: 15
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  auto-heal:
+    name: 自動エラー検知・修復システム
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      # ===================================================
+      # ステップ1: リポジトリのチェックアウト
+      # ===================================================
+      - name: 📥 リポジトリをチェックアウト
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ===================================================
+      # ステップ2: Python環境のセットアップ
+      # ===================================================
+      - name: 🐍 Python環境をセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      # ===================================================
+      # ステップ3: 依存関係のインストール
+      # ===================================================
+      - name: 📦 依存関係をインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r flask-app/requirements.txt
+          pip install -r flask-app/requirements-test.txt
+          pip install flake8 pylint black pytest pytest-cov
+
+      # ===================================================
+      # ステップ4: エラー検知・修復ループ（最大15回）
+      # ===================================================
+      - name: 🔄 自動エラー検知・修復ループ（15回まで）
+        id: auto_heal
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== 自動エラー検知・修復システム開始 ==="
+          echo "最大反復回数: ${{ github.event.inputs.max_iterations || env.MAX_HEAL_ITERATIONS }}"
+
+          # スクリプトを実行
+          python .github/scripts/auto_heal.py \
+            --max-iterations ${{ github.event.inputs.max_iterations || env.MAX_HEAL_ITERATIONS }} \
+            --github-token "${{ secrets.GITHUB_TOKEN }}" \
+            --repo "${{ github.repository }}" \
+            --run-id "${{ github.run_id }}" \
+            --actor "${{ github.actor }}"
+
+      # ===================================================
+      # ステップ5: 修復結果のサマリー表示
+      # ===================================================
+      - name: 📊 修復結果サマリー
+        if: always()
+        run: |
+          if [ -f auto_heal_summary.json ]; then
+            echo "=== 修復結果サマリー ==="
+            cat auto_heal_summary.json | jq '.'
+
+            # 結果を環境変数に設定
+            echo "TOTAL_ERRORS=$(cat auto_heal_summary.json | jq -r '.total_errors')" >> $GITHUB_ENV
+            echo "FIXED_ERRORS=$(cat auto_heal_summary.json | jq -r '.fixed_errors')" >> $GITHUB_ENV
+            echo "REMAINING_ERRORS=$(cat auto_heal_summary.json | jq -r '.remaining_errors')" >> $GITHUB_ENV
+          fi
+
+      # ===================================================
+      # ステップ6: 修復したコードをコミット・プッシュ
+      # ===================================================
+      - name: 💾 修復したコードをコミット
+        if: steps.auto_heal.outputs.has_fixes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          git add -A
+
+          git commit -m "fix: 自動エラー修復 - ${{ steps.auto_heal.outputs.fixed_count }}個のエラーを修正
+
+          ## 🔧 自動修復内容
+
+          ${{ steps.auto_heal.outputs.fix_summary }}
+
+          ## 📊 統計
+
+          - 検出エラー: ${{ steps.auto_heal.outputs.total_errors }}個
+          - 修復済み: ${{ steps.auto_heal.outputs.fixed_errors }}個
+          - 残存エラー: ${{ steps.auto_heal.outputs.remaining_errors }}個
+          - 反復回数: ${{ steps.auto_heal.outputs.iterations }}回
+
+          🤖 Auto-healed by GitHub Actions
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+          git push
+
+      # ===================================================
+      # ステップ7: 修復できなかったエラーのIssue作成
+      # ===================================================
+      - name: 🐛 未修復エラーのIssue作成
+        if: steps.auto_heal.outputs.remaining_errors != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = JSON.parse(fs.readFileSync('auto_heal_summary.json', 'utf8'));
+
+            const issueBody = `
+            ## 🚨 自動修復できなかったエラー
+
+            **検出日時**: ${new Date().toISOString()}
+            **ワークフロー実行**: [#${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ---
+
+            ## 📊 統計
+
+            - 総エラー数: ${summary.total_errors}個
+            - 修復済み: ${summary.fixed_errors}個
+            - **未修復**: ${summary.remaining_errors}個
+            - 反復回数: ${summary.iterations}回
+
+            ---
+
+            ## ❌ 未修復エラー一覧
+
+            ${summary.remaining_error_details.map((err, idx) => `
+            ### エラー ${idx + 1}: ${err.type}
+
+            **ファイル**: \`${err.file}\`
+            **行**: ${err.line}
+            **メッセージ**:
+            \`\`\`
+            ${err.message}
+            \`\`\`
+
+            **修復試行回数**: ${err.fix_attempts}回
+
+            `).join('\n')}
+
+            ---
+
+            ## 🔧 推奨対応
+
+            1. ローカル環境でエラーを再現
+            2. 手動で修正
+            3. テスト実行
+            4. コミット・プッシュ
+
+            または、以下のコマンドで修復を試行：
+            \`\`\`bash
+            /mcp-code-quality
+            /mcp-refactor
+            \`\`\`
+
+            ---
+
+            🤖 Auto-generated by GitHub Actions
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 自動修復失敗 - ${summary.remaining_errors}個のエラーが残存`,
+              body: issueBody,
+              labels: ['auto-heal', 'bug', 'automated']
+            });
+
+      # ===================================================
+      # ステップ8: 成功時のIssueコメント
+      # ===================================================
+      - name: ✅ 成功時のIssue更新
+        if: steps.auto_heal.outputs.remaining_errors == '0' && steps.auto_heal.outputs.fixed_errors != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = JSON.parse(fs.readFileSync('auto_heal_summary.json', 'utf8'));
+
+            // 最新の自動修復関連Issueを検索
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'auto-heal',
+              state: 'open',
+              sort: 'created',
+              direction: 'desc',
+              per_page: 5
+            });
+
+            // 成功メッセージをコメント
+            for (const issue of issues.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ **自動修復成功**
+
+                全てのエラーが修復されました！
+
+                - 修復エラー数: ${summary.fixed_errors}個
+                - 反復回数: ${summary.iterations}回
+                - 実行時刻: ${new Date().toISOString()}
+
+                このIssueをクローズします。
+
+                🤖 Auto-resolved by GitHub Actions`
+              });
+
+              // Issueをクローズ
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
+
+      # ===================================================
+      # ステップ9: 修復レポートのアップロード
+      # ===================================================
+      - name: 📤 修復レポートをアーティファクトにアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-heal-report-${{ github.run_id }}
+          path: |
+            auto_heal_summary.json
+            auto_heal_detailed.log
+            auto_heal_fixes.patch
+          retention-days: 30
+
+  # ===================================================
+  # Job 2: ヘルスチェック（並列実行）
+  # ===================================================
+  health-check:
+    name: システムヘルスチェック
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 チェックアウト
+        uses: actions/checkout@v4
+
+      - name: 🐍 Python環境セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 依存関係インストール
+        run: |
+          pip install -r flask-app/requirements.txt
+          pip install -r flask-app/requirements-test.txt
+
+      - name: 🏥 ヘルスチェック実行
+        run: |
+          echo "=== システムヘルスチェック ==="
+
+          # 1. Python構文チェック
+          python -m py_compile flask-app/**/*.py || true
+
+          # 2. Lintチェック
+          flake8 flask-app/ --count --select=E9,F63,F7,F82 --show-source --statistics || true
+
+          # 3. テストスイート実行
+          pytest tests/ --maxfail=5 --tb=short || true
+
+          # 4. セキュリティチェック
+          pip install bandit
+          bandit -r flask-app/ -ll || true
+
+          # 5. 依存関係脆弱性チェック
+          pip install safety
+          safety check --json || true
+
+      - name: 📊 ヘルスレポート作成
+        if: always()
+        run: |
+          echo "ヘルスチェック完了" > health_report.txt
+          echo "実行時刻: $(date)" >> health_report.txt
+
+      - name: 📤 ヘルスレポートアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-report-${{ github.run_id }}
+          path: health_report.txt
+          retention-days: 7
