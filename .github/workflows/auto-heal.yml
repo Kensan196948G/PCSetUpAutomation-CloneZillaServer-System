@@ -105,25 +105,24 @@ jobs:
       # ステップ6: 修復したコードをコミット・プッシュ
       # ===================================================
       - name: 💾 修復したコードをコミット
-        if: steps.auto_heal.outputs.has_fixes == 'true'
+        if: env.FIXED_ERRORS != '0' && env.FIXED_ERRORS != ''
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
           git add -A
 
-          git commit -m "fix: 自動エラー修復 - ${{ steps.auto_heal.outputs.fixed_count }}個のエラーを修正
+          git commit -m "fix: 自動エラー修復 - ${{ env.FIXED_ERRORS }}個のエラーを修正
 
           ## 🔧 自動修復内容
 
-          ${{ steps.auto_heal.outputs.fix_summary }}
+          自動フォーマット、未使用インポート削除、インデント修正等
 
           ## 📊 統計
 
-          - 検出エラー: ${{ steps.auto_heal.outputs.total_errors }}個
-          - 修復済み: ${{ steps.auto_heal.outputs.fixed_errors }}個
-          - 残存エラー: ${{ steps.auto_heal.outputs.remaining_errors }}個
-          - 反復回数: ${{ steps.auto_heal.outputs.iterations }}回
+          - 検出エラー: ${{ env.TOTAL_ERRORS }}個
+          - 修復済み: ${{ env.FIXED_ERRORS }}個
+          - 残存エラー: ${{ env.REMAINING_ERRORS }}個
 
           🤖 Auto-healed by GitHub Actions
 
@@ -135,7 +134,7 @@ jobs:
       # ステップ7: 修復できなかったエラーのIssue作成
       # ===================================================
       - name: 🐛 未修復エラーのIssue作成
-        if: steps.auto_heal.outputs.remaining_errors != '0'
+        if: env.REMAINING_ERRORS != '0' && env.REMAINING_ERRORS != ''
         uses: actions/github-script@v7
         with:
           script: |
@@ -207,7 +206,7 @@ jobs:
       # ステップ8: 成功時のIssueコメント
       # ===================================================
       - name: ✅ 成功時のIssue更新
-        if: steps.auto_heal.outputs.remaining_errors == '0' && steps.auto_heal.outputs.fixed_errors != '0'
+        if: env.REMAINING_ERRORS == '0' && env.FIXED_ERRORS != '0'
         uses: actions/github-script@v7
         with:
           script: |
