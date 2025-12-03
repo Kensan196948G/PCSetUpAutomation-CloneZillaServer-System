@@ -25,9 +25,9 @@ jobs:
         source venv/bin/activate
         python -m pip install --upgrade pip
         pip install -r flask-app/requirements.txt
-        pip install pytest # Install pytest itself
+        pip install -r flask-app/requirements-test.txt
 
     - name: Run tests with pytest
       run: |
         source venv/bin/activate
-        pytest -v
+        cd flask-app && pytest tests/ -v
