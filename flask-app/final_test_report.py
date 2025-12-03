@@ -403,7 +403,9 @@ def main():
     passed = sum(1 for v in results.values() if v)
     failed = total - passed
 
-    print(f"\n{Colors.BOLD}Total Tests: {total} | Passed: {Colors.GREEN}{passed}{Colors.RESET}{Colors.BOLD} | Failed: {Colors.RED}{failed}{Colors.RESET}")
+    print(f"\n{Colors.BOLD}Total Tests: {total} | "
+          f"Passed: {Colors.GREEN}{passed}{Colors.RESET}{Colors.BOLD} | "
+          f"Failed: {Colors.RED}{failed}{Colors.RESET}")
 
     if all(results.values()):
         print(f"\n{Colors.BOLD}{Colors.GREEN}✓ ALL TESTS PASSED{Colors.RESET}")

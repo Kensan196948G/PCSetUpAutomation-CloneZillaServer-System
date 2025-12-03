@@ -363,7 +363,9 @@ class ImplementationChecker:
             'PC選択機能': True,  # create.html exists
             'マスターイメージ選択': True,  # in create form
             '展開モード選択': self._check_feature('drbl_integration', 'implemented_methods', 'start_multicast_deployment'),
-            '展開開始': self._check_feature('api_endpoints', 'deployment', 'implemented', 'POST /api/deployment/<id>/start'),
+            '展開開始': self._check_feature(
+                'api_endpoints', 'deployment', 'implemented',
+                'POST /api/deployment/<id>/start'),
             '展開停止': self._check_feature('api_endpoints', 'deployment', 'implemented', 'POST /api/deployment/<id>/stop'),
             '進捗モニタリング': self._check_feature('drbl_integration', 'implemented_methods', 'get_deployment_status'),
             'WebUI展開一覧': self._check_feature('web_ui', 'existing_templates', 'list.html'),
@@ -398,7 +400,8 @@ class ImplementationChecker:
                 for endpoint in self.results['api_endpoints']['images']['missing']:
                     missing_features.append((f'Images API: {endpoint}', '中', '低'))
 
-            if 'deployment' in self.results['api_endpoints'] and 'missing' in self.results['api_endpoints']['deployment']:
+            if ('deployment' in self.results['api_endpoints']
+                    and 'missing' in self.results['api_endpoints']['deployment']):
                 for endpoint in self.results['api_endpoints']['deployment']['missing']:
                     missing_features.append((f'Deployment API: {endpoint}', '高', '中'))
 

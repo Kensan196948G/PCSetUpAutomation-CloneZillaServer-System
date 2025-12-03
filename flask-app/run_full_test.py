@@ -129,7 +129,8 @@ def check_database():
         if records:
             print("\nExisting PC records:")
             for record in records:
-                print(f"  ID: {record[0]} | Serial: {record[1]} | PCName: {record[2]} | ODJ: {record[3]} | Created: {record[4]}")
+                print(f"  ID: {record[0]} | Serial: {record[1]} | "
+                      f"PCName: {record[2]} | ODJ: {record[3]} | Created: {record[4]}")
         else:
             print("\nNo records found. Adding test data...")
             cursor.execute(

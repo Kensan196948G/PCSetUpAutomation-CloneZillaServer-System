@@ -345,7 +345,8 @@ class TestBulkPerformance:
         print(f"  Requests: {num_requests}")
         print(f"  Total time: {total_time:.3f}s")
         print(f"  Throughput: {throughput:.1f} req/s")
-        print(f"  Response time - Avg: {avg_response_time:.1f}ms, Min: {min_response_time:.1f}ms, Max: {max_response_time:.1f}ms")
+        print(f"  Response time - Avg: {avg_response_time:.1f}ms, "
+              f"Min: {min_response_time:.1f}ms, Max: {max_response_time:.1f}ms")
 
         # Performance requirements
         assert throughput >= 100, f"Throughput {throughput:.1f} req/s, expected >= 100 req/s"
@@ -427,13 +428,16 @@ class TestBulkPerformance:
         # Perform 1000 rapid log inserts
         start_time = time.time()
 
+        # Valid status values: pending, in_progress, completed, failed
+        valid_statuses = ['pending', 'in_progress', 'completed', 'failed']
+
         for i in range(1000):
             pc = pcs[i % 20]  # Cycle through PCs
 
             log_data = {
                 'serial': pc.serial,
                 'pcname': pc.pcname,
-                'status': 'imaging',
+                'status': valid_statuses[i % len(valid_statuses)],
                 'timestamp': f'2025-11-16 12:{i//60:02d}:{i%60:02d}'
             }
 

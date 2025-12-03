@@ -38,7 +38,8 @@ if os.path.exists(db_path):
         if records:
             print("\n  Current PC records:")
             for record in records:
-                print(f"    ID: {record[0]}, Serial: {record[1]}, PCName: {record[2]}, ODJ: {record[3]}, Created: {record[4]}")
+                print(f"    ID: {record[0]}, Serial: {record[1]}, "
+                      f"PCName: {record[2]}, ODJ: {record[3]}, Created: {record[4]}")
         else:
             print("\n  No records found. Adding test data...")
             cursor.execute(
