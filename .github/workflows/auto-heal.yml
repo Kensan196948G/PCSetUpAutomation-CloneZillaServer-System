@@ -99,6 +99,12 @@ jobs:
             echo "TOTAL_ERRORS=$(cat auto_heal_summary.json | jq -r '.total_errors')" >> $GITHUB_ENV
             echo "FIXED_ERRORS=$(cat auto_heal_summary.json | jq -r '.fixed_errors')" >> $GITHUB_ENV
             echo "REMAINING_ERRORS=$(cat auto_heal_summary.json | jq -r '.remaining_errors')" >> $GITHUB_ENV
+
+            # デバッグ: 環境変数を表示
+            echo "=== 環境変数確認 ==="
+            echo "TOTAL_ERRORS: $(cat auto_heal_summary.json | jq -r '.total_errors')"
+            echo "FIXED_ERRORS: $(cat auto_heal_summary.json | jq -r '.fixed_errors')"
+            echo "REMAINING_ERRORS: $(cat auto_heal_summary.json | jq -r '.remaining_errors')"
           fi
 
       # ===================================================
@@ -134,7 +140,7 @@ jobs:
       # ステップ7: 修復できなかったエラーのIssue作成
       # ===================================================
       - name: 🐛 未修復エラーのIssue作成
-        if: env.REMAINING_ERRORS != '0' && env.REMAINING_ERRORS != ''
+        if: always() && env.REMAINING_ERRORS != '' && env.REMAINING_ERRORS != '0'
         uses: actions/github-script@v7
         with:
           script: |
