@@ -376,8 +376,9 @@ jobs:
           # 2. Lintチェック
           flake8 flask-app/ --count --select=E9,F63,F7,F82 --show-source --statistics || true
 
-          # 3. テストスイート実行
-          pytest flask-app/tests/ --maxfail=5 --tb=short || true
+          # 3. テストスイート実行（flask-appディレクトリから実行）
+          cd flask-app && pytest tests/ --maxfail=5 --tb=short || true
+          cd ..
 
           # 4. セキュリティチェック
           pip install bandit

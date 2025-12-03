@@ -59,10 +59,12 @@ class ErrorDetector:
         print("🔍 テスト失敗を検知中...")
 
         try:
+            # flask-appディレクトリからpytestを実行（pytest.iniを正しく読み込むため）
             result = subprocess.run(
-                ["pytest", "flask-app/tests/", "--tb=short", "--maxfail=10", "-v"],
+                ["pytest", "tests/", "--tb=short", "--maxfail=10", "-v"],
                 capture_output=True,
-                text=True
+                text=True,
+                cwd="flask-app"
             )
 
             if result.returncode != 0:
