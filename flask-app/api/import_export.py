@@ -226,8 +226,8 @@ def export_csv():
         output.seek(0)
         response = current_app.make_response(output.getvalue())
         response.headers['Content-Type'] = 'text/csv'
-        response.headers['Content-Disposition'] = f'attachment; filename=pc_master_export_{
-            datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        response.headers['Content-Disposition'] = f'attachment; filename=pc_master_export_{timestamp}.csv'
 
         logger.info(f'CSV export completed: {len(pcs)} records')
         return response
