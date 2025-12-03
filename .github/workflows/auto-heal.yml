@@ -137,9 +137,9 @@ jobs:
           git push
 
       # ===================================================
-      # ステップ7: 修復できなかったエラーのIssue作成
+      # ステップ7: 修復できなかったエラーのIssue作成/更新
       # ===================================================
-      - name: 🐛 未修復エラーのIssue作成
+      - name: 🐛 未修復エラーのIssue作成/更新
         if: always() && env.REMAINING_ERRORS != '' && env.REMAINING_ERRORS != '0'
         uses: actions/github-script@v7
         with:
@@ -147,38 +147,108 @@ jobs:
             const fs = require('fs');
             const summary = JSON.parse(fs.readFileSync('auto_heal_summary.json', 'utf8'));
 
-            const issueBody = `
-            ## 🚨 自動修復できなかったエラー
+            // 既存の auto-heal Issueを検索
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'auto-heal,bug',
+              state: 'open',
+              sort: 'created',
+              direction: 'desc',
+              per_page: 10
+            });
 
-            **検出日時**: ${new Date().toISOString()}
-            **ワークフロー実行**: [#${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            // テスト用Issueを除外（タイトルに"TEST"が含まれないもの）
+            const healIssues = existingIssues.data.filter(
+              issue => !issue.title.includes('[TEST]') && issue.title.includes('自動修復失敗')
+            );
+
+            const timestamp = new Date().toISOString();
+            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+
+            // エラー詳細を作成（最大10件まで表示）
+            const errorDetails = summary.remaining_error_details
+              .slice(0, 10)
+              .map((err, idx) => `
+            ### エラー ${idx + 1}: ${err.type}
+            - **ファイル**: \`${err.file}\`
+            - **行**: ${err.line}
+            - **メッセージ**: \`${err.message}\`
+            - **修復試行**: ${err.fix_attempts}回
+            `).join('\n');
+
+            const additionalCount = summary.remaining_error_details.length > 10
+              ? `\n> ...他 ${summary.remaining_error_details.length - 10} 件のエラー`
+              : '';
+
+            if (healIssues.length > 0) {
+              // 既存Issueがある場合: コメントを追加
+              const issueNumber = healIssues[0].number;
+              console.log(`既存Issue #${issueNumber} にコメントを追加します`);
+
+              const commentBody = `## 🔄 自動修復実行レポート
+
+            **実行日時**: ${timestamp}
+            **ワークフロー**: [Run #${{ github.run_id }}](${runUrl})
+
+            ### 📊 統計
+            | 項目 | 数 |
+            |------|-----|
+            | 検出エラー | ${summary.total_errors}個 |
+            | 今回修復 | ${summary.fixed_errors}個 |
+            | **残存エラー** | **${summary.remaining_errors}個** |
+            | 反復回数 | ${summary.iterations}回 |
+
+            ### ❌ 残存エラー（上位10件）
+            ${errorDetails}
+            ${additionalCount}
+
+            ---
+            🤖 Auto-updated by GitHub Actions (次回実行: 30分後)`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: commentBody
+              });
+
+              // タイトルも更新（エラー数が変わった場合）
+              const newTitle = `🚨 自動修復失敗 - ${summary.remaining_errors}個のエラーが残存`;
+              if (healIssues[0].title !== newTitle) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  title: newTitle
+                });
+              }
+
+            } else {
+              // 既存Issueがない場合: 新規作成
+              console.log('新規Issueを作成します');
+
+              const issueBody = `## 🚨 自動修復できなかったエラー
+
+            **初回検出日時**: ${timestamp}
+            **ワークフロー実行**: [Run #${{ github.run_id }}](${runUrl})
 
             ---
 
             ## 📊 統計
 
-            - 総エラー数: ${summary.total_errors}個
-            - 修復済み: ${summary.fixed_errors}個
-            - **未修復**: ${summary.remaining_errors}個
-            - 反復回数: ${summary.iterations}回
+            | 項目 | 数 |
+            |------|-----|
+            | 総エラー数 | ${summary.total_errors}個 |
+            | 修復済み | ${summary.fixed_errors}個 |
+            | **未修復** | **${summary.remaining_errors}個** |
+            | 反復回数 | ${summary.iterations}回 |
 
             ---
 
-            ## ❌ 未修復エラー一覧
-
-            ${summary.remaining_error_details.map((err, idx) => `
-            ### エラー ${idx + 1}: ${err.type}
-
-            **ファイル**: \`${err.file}\`
-            **行**: ${err.line}
-            **メッセージ**:
-            \`\`\`
-            ${err.message}
-            \`\`\`
-
-            **修復試行回数**: ${err.fix_attempts}回
-
-            `).join('\n')}
+            ## ❌ 未修復エラー一覧（上位10件）
+            ${errorDetails}
+            ${additionalCount}
 
             ---
 
@@ -197,16 +267,19 @@ jobs:
 
             ---
 
-            🤖 Auto-generated by GitHub Actions
-            `;
+            > 📝 このIssueは30分ごとに自動更新されます。
+            > 全てのエラーが修復されると自動的にクローズされます。
 
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `🚨 自動修復失敗 - ${summary.remaining_errors}個のエラーが残存`,
-              body: issueBody,
-              labels: ['auto-heal', 'bug', 'automated']
-            });
+            🤖 Auto-generated by GitHub Actions`;
+
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 自動修復失敗 - ${summary.remaining_errors}個のエラーが残存`,
+                body: issueBody,
+                labels: ['auto-heal', 'bug', 'automated']
+              });
+            }
 
       # ===================================================
       # ステップ8: 成功時のIssueコメント
